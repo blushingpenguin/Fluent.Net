@@ -1,0 +1,59 @@
+{
+  "type": "Resource",
+  "body": [
+    {
+      "type": "Message",
+      "annotations": [],
+      "id": {
+        "type": "Identifier",
+        "name": "foo",
+        "span": {
+          "type": "Span",
+          "start": 0,
+          "end": 3
+        }
+      },
+      "value": {
+        "type": "Pattern",
+        "elements": [
+          {
+            "type": "TextElement",
+            "value": "Value",
+            "span": {
+              "type": "Span",
+              "start": 6,
+              "end": 11
+            }
+          }
+        ],
+        "span": {
+          "type": "Span",
+          "start": 6,
+          "end": 11
+        }
+      },
+      "attributes": [],
+      "comment": null,
+      "span": {
+        "type": "Span",
+        "start": 0,
+        "end": 11
+      }
+    },
+    {
+      "type": "Comment",
+      "annotations": [],
+      "content": "This is a standalone comment",
+      "span": {
+        "type": "Span",
+        "start": 13,
+        "end": 44
+      }
+    }
+  ],
+  "span": {
+    "type": "Span",
+    "start": 0,
+    "end": 45
+  }
+}

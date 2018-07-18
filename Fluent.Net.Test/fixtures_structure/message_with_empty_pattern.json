@@ -1,0 +1,208 @@
+{
+  "type": "Resource",
+  "body": [
+    {
+      "type": "ResourceComment",
+      "annotations": [],
+      "content": "BE CAREFUL WHEN EDITING THIS FILE\n\nThe last character in this file is the equals sign in `key5 =` in line 18.\nWe want to test a message with no value and with no EOL after its\nidentifier. Most editors automatically add a trailing newline at EOF.\nIf you edit this file make sure to turn this behavior off.",
+      "span": {
+        "type": "Span",
+        "start": 0,
+        "end": 327
+      }
+    },
+    {
+      "type": "Junk",
+      "annotations": [
+        {
+          "type": "Annotation",
+          "code": "E0005",
+          "args": [
+            "key1"
+          ],
+          "message": "Expected message \"key1\" to have a value or attributes",
+          "span": {
+            "type": "Span",
+            "start": 335,
+            "end": 335
+          }
+        }
+      ],
+      "content": "key1 =\n\n",
+      "span": {
+        "type": "Span",
+        "start": 329,
+        "end": 337
+      }
+    },
+    {
+      "type": "Junk",
+      "annotations": [
+        {
+          "type": "Annotation",
+          "code": "E0005",
+          "args": [
+            "key2"
+          ],
+          "message": "Expected message \"key2\" to have a value or attributes",
+          "span": {
+            "type": "Span",
+            "start": 344,
+            "end": 344
+          }
+        }
+      ],
+      "content": "key2 = \n\n",
+      "span": {
+        "type": "Span",
+        "start": 337,
+        "end": 346
+      }
+    },
+    {
+      "type": "Message",
+      "annotations": [],
+      "id": {
+        "type": "Identifier",
+        "name": "key3",
+        "span": {
+          "type": "Span",
+          "start": 346,
+          "end": 350
+        }
+      },
+      "value": null,
+      "attributes": [
+        {
+          "type": "Attribute",
+          "id": {
+            "type": "Identifier",
+            "name": "attr",
+            "span": {
+              "type": "Span",
+              "start": 358,
+              "end": 362
+            }
+          },
+          "value": {
+            "type": "Pattern",
+            "elements": [
+              {
+                "type": "TextElement",
+                "value": "Attr",
+                "span": {
+                  "type": "Span",
+                  "start": 365,
+                  "end": 369
+                }
+              }
+            ],
+            "span": {
+              "type": "Span",
+              "start": 365,
+              "end": 369
+            }
+          },
+          "span": {
+            "type": "Span",
+            "start": 357,
+            "end": 369
+          }
+        }
+      ],
+      "comment": null,
+      "span": {
+        "type": "Span",
+        "start": 346,
+        "end": 369
+      }
+    },
+    {
+      "type": "Message",
+      "annotations": [],
+      "id": {
+        "type": "Identifier",
+        "name": "key4",
+        "span": {
+          "type": "Span",
+          "start": 371,
+          "end": 375
+        }
+      },
+      "value": null,
+      "attributes": [
+        {
+          "type": "Attribute",
+          "id": {
+            "type": "Identifier",
+            "name": "attr",
+            "span": {
+              "type": "Span",
+              "start": 384,
+              "end": 388
+            }
+          },
+          "value": {
+            "type": "Pattern",
+            "elements": [
+              {
+                "type": "TextElement",
+                "value": "Attr",
+                "span": {
+                  "type": "Span",
+                  "start": 391,
+                  "end": 395
+                }
+              }
+            ],
+            "span": {
+              "type": "Span",
+              "start": 391,
+              "end": 395
+            }
+          },
+          "span": {
+            "type": "Span",
+            "start": 383,
+            "end": 395
+          }
+        }
+      ],
+      "comment": null,
+      "span": {
+        "type": "Span",
+        "start": 371,
+        "end": 395
+      }
+    },
+    {
+      "type": "Junk",
+      "annotations": [
+        {
+          "type": "Annotation",
+          "code": "E0005",
+          "args": [
+            "key5"
+          ],
+          "message": "Expected message \"key5\" to have a value or attributes",
+          "span": {
+            "type": "Span",
+            "start": 403,
+            "end": 403
+          }
+        }
+      ],
+      "content": "key5 =",
+      "span": {
+        "type": "Span",
+        "start": 397,
+        "end": 403
+      }
+    }
+  ],
+  "span": {
+    "type": "Span",
+    "start": 0,
+    "end": 403
+  }
+}

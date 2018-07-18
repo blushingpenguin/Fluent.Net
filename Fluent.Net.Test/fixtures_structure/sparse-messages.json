@@ -1,0 +1,345 @@
+{
+  "type": "Resource",
+  "body": [
+    {
+      "type": "Message",
+      "annotations": [],
+      "id": {
+        "type": "Identifier",
+        "name": "key",
+        "span": {
+          "type": "Span",
+          "start": 0,
+          "end": 3
+        }
+      },
+      "value": {
+        "type": "Pattern",
+        "elements": [
+          {
+            "type": "TextElement",
+            "value": "Value",
+            "span": {
+              "type": "Span",
+              "start": 12,
+              "end": 17
+            }
+          }
+        ],
+        "span": {
+          "type": "Span",
+          "start": 12,
+          "end": 17
+        }
+      },
+      "attributes": [],
+      "comment": null,
+      "span": {
+        "type": "Span",
+        "start": 0,
+        "end": 17
+      }
+    },
+    {
+      "type": "Message",
+      "annotations": [],
+      "id": {
+        "type": "Identifier",
+        "name": "key2",
+        "span": {
+          "type": "Span",
+          "start": 19,
+          "end": 23
+        }
+      },
+      "value": null,
+      "attributes": [
+        {
+          "type": "Attribute",
+          "id": {
+            "type": "Identifier",
+            "name": "attr",
+            "span": {
+              "type": "Span",
+              "start": 33,
+              "end": 37
+            }
+          },
+          "value": {
+            "type": "Pattern",
+            "elements": [
+              {
+                "type": "TextElement",
+                "value": "Attribute",
+                "span": {
+                  "type": "Span",
+                  "start": 40,
+                  "end": 49
+                }
+              }
+            ],
+            "span": {
+              "type": "Span",
+              "start": 40,
+              "end": 49
+            }
+          },
+          "span": {
+            "type": "Span",
+            "start": 32,
+            "end": 49
+          }
+        }
+      ],
+      "comment": null,
+      "span": {
+        "type": "Span",
+        "start": 19,
+        "end": 49
+      }
+    },
+    {
+      "type": "Message",
+      "annotations": [],
+      "id": {
+        "type": "Identifier",
+        "name": "key3",
+        "span": {
+          "type": "Span",
+          "start": 52,
+          "end": 56
+        }
+      },
+      "value": {
+        "type": "Pattern",
+        "elements": [
+          {
+            "type": "TextElement",
+            "value": "Value\nValue2\n\n\nValue 4\nValue3",
+            "span": {
+              "type": "Span",
+              "start": 63,
+              "end": 104
+            }
+          }
+        ],
+        "span": {
+          "type": "Span",
+          "start": 63,
+          "end": 104
+        }
+      },
+      "attributes": [
+        {
+          "type": "Attribute",
+          "id": {
+            "type": "Identifier",
+            "name": "attr2",
+            "span": {
+              "type": "Span",
+              "start": 113,
+              "end": 118
+            }
+          },
+          "value": {
+            "type": "Pattern",
+            "elements": [
+              {
+                "type": "TextElement",
+                "value": "Attr 2",
+                "span": {
+                  "type": "Span",
+                  "start": 121,
+                  "end": 127
+                }
+              }
+            ],
+            "span": {
+              "type": "Span",
+              "start": 121,
+              "end": 127
+            }
+          },
+          "span": {
+            "type": "Span",
+            "start": 112,
+            "end": 127
+          }
+        }
+      ],
+      "comment": null,
+      "span": {
+        "type": "Span",
+        "start": 52,
+        "end": 127
+      }
+    },
+    {
+      "type": "Message",
+      "annotations": [],
+      "id": {
+        "type": "Identifier",
+        "name": "key5",
+        "span": {
+          "type": "Span",
+          "start": 130,
+          "end": 134
+        }
+      },
+      "value": {
+        "type": "Pattern",
+        "elements": [
+          {
+            "type": "TextElement",
+            "value": "Value 5",
+            "span": {
+              "type": "Span",
+              "start": 137,
+              "end": 144
+            }
+          }
+        ],
+        "span": {
+          "type": "Span",
+          "start": 137,
+          "end": 144
+        }
+      },
+      "attributes": [],
+      "comment": null,
+      "span": {
+        "type": "Span",
+        "start": 130,
+        "end": 144
+      }
+    },
+    {
+      "type": "Message",
+      "annotations": [],
+      "id": {
+        "type": "Identifier",
+        "name": "key6",
+        "span": {
+          "type": "Span",
+          "start": 146,
+          "end": 150
+        }
+      },
+      "value": {
+        "type": "Pattern",
+        "elements": [
+          {
+            "type": "Placeable",
+            "expression": {
+              "type": "SelectExpression",
+              "expression": null,
+              "variants": [
+                {
+                  "type": "Variant",
+                  "key": {
+                    "type": "VariantName",
+                    "name": "one",
+                    "span": {
+                      "type": "Span",
+                      "start": 167,
+                      "end": 170
+                    }
+                  },
+                  "value": {
+                    "type": "Pattern",
+                    "elements": [
+                      {
+                        "type": "TextElement",
+                        "value": "One",
+                        "span": {
+                          "type": "Span",
+                          "start": 172,
+                          "end": 175
+                        }
+                      }
+                    ],
+                    "span": {
+                      "type": "Span",
+                      "start": 172,
+                      "end": 175
+                    }
+                  },
+                  "default": false,
+                  "span": {
+                    "type": "Span",
+                    "start": 166,
+                    "end": 175
+                  }
+                },
+                {
+                  "type": "Variant",
+                  "key": {
+                    "type": "VariantName",
+                    "name": "two",
+                    "span": {
+                      "type": "Span",
+                      "start": 190,
+                      "end": 193
+                    }
+                  },
+                  "value": {
+                    "type": "Pattern",
+                    "elements": [
+                      {
+                        "type": "TextElement",
+                        "value": "Two",
+                        "span": {
+                          "type": "Span",
+                          "start": 195,
+                          "end": 198
+                        }
+                      }
+                    ],
+                    "span": {
+                      "type": "Span",
+                      "start": 195,
+                      "end": 198
+                    }
+                  },
+                  "default": true,
+                  "span": {
+                    "type": "Span",
+                    "start": 188,
+                    "end": 198
+                  }
+                }
+              ],
+              "span": {
+                "type": "Span",
+                "start": 154,
+                "end": 206
+              }
+            },
+            "span": {
+              "type": "Span",
+              "start": 153,
+              "end": 207
+            }
+          }
+        ],
+        "span": {
+          "type": "Span",
+          "start": 153,
+          "end": 207
+        }
+      },
+      "attributes": [],
+      "comment": null,
+      "span": {
+        "type": "Span",
+        "start": 146,
+        "end": 207
+      }
+    }
+  ],
+  "span": {
+    "type": "Span",
+    "start": 0,
+    "end": 208
+  }
+}

@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2042
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fluent.Net", "Fluent.Net\Fluent.Net.csproj", "{A530F7A4-009E-4376-8A14-932771446575}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluent.Net.Test", "Fluent.Net.Test\Fluent.Net.Test.csproj", "{D028E809-62B8-4F89-84B8-BC2955B09C7C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A530F7A4-009E-4376-8A14-932771446575}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A530F7A4-009E-4376-8A14-932771446575}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A530F7A4-009E-4376-8A14-932771446575}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A530F7A4-009E-4376-8A14-932771446575}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D028E809-62B8-4F89-84B8-BC2955B09C7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D028E809-62B8-4F89-84B8-BC2955B09C7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D028E809-62B8-4F89-84B8-BC2955B09C7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D028E809-62B8-4F89-84B8-BC2955B09C7C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E03BEB45-BA60-418A-A967-BB904523C662}
+	EndGlobalSection
+EndGlobal
