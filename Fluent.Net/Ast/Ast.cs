@@ -82,68 +82,74 @@ namespace Fluent.Net.Ast
         }
     }
 
-    public class Message : Entry
+    public abstract class MessageTermBase : Entry
     {
         public Identifier Id { get; set; }
         public Pattern Value { get; set; }
         public IReadOnlyList<Attribute> Attributes { get; set; }
-        public BaseComment Comment { get; set; }
+        public Comment Comment { get; set; }
 
-        public Message()
+        protected MessageTermBase()
         {
         }
 
-        public Message(Identifier id, Pattern value = null,
-            IReadOnlyList<Attribute> attributes = null, BaseComment comment = null)
+        protected MessageTermBase(Identifier id, Pattern value = null,
+            IReadOnlyList<Attribute> attributes = null, Comment comment = null)
         {
             Id = id;
             Value = value;
             Attributes = attributes;
             Comment = comment;
+        }
+
+        public override JObject ToJson()
+        {
+            var obj = base.ToJson();
+            obj["attributes"] = Attributes == null ? new JArray() :
+                new JArray(Attributes.Select(x => x.ToJson()));
+            obj["comment"] = Comment == null ? null : Comment.ToJson();
+            obj["id"] = Id == null ? null : Id.ToJson();
+            obj["value"] = Value == null ? null : Value.ToJson();
+            return obj;
+        }
+    }
+
+    public class Message : MessageTermBase
+    {
+        public Message()
+        {
+        }
+
+        public Message(Identifier id, Pattern value = null,
+            IReadOnlyList<Attribute> attributes = null, Comment comment = null) :
+            base(id, value, attributes, comment)
+        {
         }
 
         public override JObject ToJson()
         {
             var obj = base.ToJson();
             obj["type"] = "Message";
-            obj["attributes"] = Attributes == null ? new JArray() : 
-                new JArray(Attributes.Select(x => x.ToJson()));
-            obj["comment"] = Comment == null ? null : Comment.ToJson();
-            obj["id"] = Id.ToJson();
-            obj["value"] = Value == null ? null : Value.ToJson();
             return obj;
         }
     }
 
-    public class Term : Entry
+    public class Term : MessageTermBase
     {
-        public Identifier Id { get; set; }
-        public Pattern Value { get; set; }
-        public IReadOnlyList<Attribute> Attributes { get; set; }
-        public BaseComment Comment { get; set; }
-
         public Term()
         {
         }
 
         public Term(Identifier id, Pattern value,
-            IReadOnlyList<Attribute> attributes, BaseComment comment = null)
+            IReadOnlyList<Attribute> attributes, Comment comment = null) :
+            base(id, value, attributes, comment)
         {
-            Id = id;
-            Value = value;
-            Attributes = attributes;
-            Comment = comment;
         }
 
         public override JObject ToJson()
         {
             var obj = base.ToJson();
             obj["type"] = "Term";
-            obj["attributes"] = Attributes == null ? new JArray() :
-                new JArray(Attributes.Select(x => x.ToJson()));
-            obj["comment"] = Comment == null ? null : Comment.ToJson();
-            obj["id"] = Id.ToJson();
-            obj["value"] = Value.ToJson();
             return obj;
         }
     }

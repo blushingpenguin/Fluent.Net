@@ -157,7 +157,7 @@ namespace Fluent.Net
 
             if (ps.IsEntryIDStart() && (comment == null || comment is Ast.Comment))
             {
-                return GetMessage(ps, comment);
+                return GetMessage(ps, comment as Ast.Comment);
             }
 
             if (comment != null)
@@ -294,7 +294,7 @@ namespace Fluent.Net
         public Ast.GroupComment GetGroupCommentFromSection(FtlParserStream ps, Ast.BaseComment comment) =>
             SpanWrapper(ps, () => _GetGroupCommentFromSection(ps, comment));
 
-        Ast.Entry _GetMessage(FtlParserStream ps, Ast.BaseComment comment)
+        Ast.Entry _GetMessage(FtlParserStream ps, Ast.Comment comment)
         {
             var id = GetEntryIdentifier(ps);
 
@@ -343,7 +343,7 @@ namespace Fluent.Net
             return new Ast.Message(id, pattern, attrs, comment);
         }
 
-        Ast.Entry GetMessage(FtlParserStream ps, Ast.BaseComment comment) =>
+        Ast.Entry GetMessage(FtlParserStream ps, Ast.Comment comment) =>
             SpanWrapper(ps, () => _GetMessage(ps, comment));
 
         Ast.Attribute _GetAttribute(FtlParserStream ps)
