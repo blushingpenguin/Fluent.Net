@@ -8,8 +8,8 @@ namespace Fluent.Net
 {
     public class Parser
     {
-        public static int Eof = ParserStream.Eof;
-        public static Regex s_fnName = new Regex("^[A-Z][A-Z_?-]*$", RegexOptions.Compiled);
+        const int Eof = ParserStream.Eof;
+        internal static Regex s_fnName = new Regex("^[A-Z][A-Z_?-]*$", RegexOptions.Compiled);
 
         bool _withSpans;
         bool _lastCommentZeroFourSyntax = false;
@@ -272,11 +272,11 @@ namespace Fluent.Net
             ps.ExpectChar('[');
             ps.ExpectChar('[');
 
-            ps.SkipInlineWS();
+            ps.SkipInlineWs();
 
             GetVariantName(ps);
 
-            ps.SkipInlineWS();
+            ps.SkipInlineWs();
 
             ps.ExpectChar(']');
             ps.ExpectChar(']');
@@ -298,7 +298,7 @@ namespace Fluent.Net
         {
             var id = GetEntryIdentifier(ps);
 
-            ps.SkipInlineWS();
+            ps.SkipInlineWs();
 
             Ast.Pattern pattern = null;
             IReadOnlyList<Ast.Attribute> attrs= null;
@@ -316,7 +316,7 @@ namespace Fluent.Net
                 }
                 else
                 {
-                    ps.SkipInlineWS();
+                    ps.SkipInlineWs();
                 }
             }
 
@@ -352,7 +352,7 @@ namespace Fluent.Net
 
             var key = GetIdentifier(ps);
 
-            ps.SkipInlineWS();
+            ps.SkipInlineWs();
             ps.ExpectChar('=');
 
             if (ps.IsPeekPatternStart())
@@ -561,7 +561,7 @@ namespace Fluent.Net
         Ast.Pattern _GetPattern(FtlParserStream ps)
         {
             var elements = new List<Ast.SyntaxNode>();
-            ps.SkipInlineWS();
+            ps.SkipInlineWs();
 
             int ch;
             while ((ch = ps.Current) != Eof)
@@ -611,7 +611,7 @@ namespace Fluent.Net
                     }
 
                     ps.SkipNewLine();
-                    ps.SkipInlineWS();
+                    ps.SkipInlineWs();
 
                     // Add the new line to the buffer
                     buffer.Append((char)ch);
@@ -668,11 +668,11 @@ namespace Fluent.Net
                 return new Ast.SelectExpression(null, variants);
             }
 
-            ps.SkipInlineWS();
+            ps.SkipInlineWs();
 
             var selector = GetSelectorExpression(ps);
 
-            ps.SkipInlineWS();
+            ps.SkipInlineWs();
 
             if (ps.CurrentIs('-'))
             {
@@ -703,7 +703,7 @@ namespace Fluent.Net
                 ps.Next();
                 ps.Next();
 
-                ps.SkipInlineWS();
+                ps.SkipInlineWs();
 
                 var variants = GetVariants(ps);
 
@@ -791,7 +791,7 @@ namespace Fluent.Net
         {
             var exp = GetSelectorExpression(ps);
 
-            ps.SkipInlineWS();
+            ps.SkipInlineWs();
 
             if (ps.Current != ':')
             {
@@ -805,7 +805,7 @@ namespace Fluent.Net
             }
 
             ps.Next();
-            ps.SkipInlineWS();
+            ps.SkipInlineWs();
 
             var val = GetArgVal(ps);
             return new Ast.NamedArgument(messageReference.Id, val);
@@ -818,7 +818,7 @@ namespace Fluent.Net
         {
             var args = new List<Ast.SyntaxNode>();
 
-            ps.SkipInlineWS();
+            ps.SkipInlineWs();
 
             while (true)
             {
@@ -830,12 +830,12 @@ namespace Fluent.Net
                 var arg = GetCallArg(ps);
                 args.Add(arg);
 
-                ps.SkipInlineWS();
+                ps.SkipInlineWs();
 
                 if (ps.Current == ',')
                 {
                     ps.Next();
-                    ps.SkipInlineWS();
+                    ps.SkipInlineWs();
                     continue;
                 }
                 else

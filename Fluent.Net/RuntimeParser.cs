@@ -1,13 +1,121 @@
-﻿using System;
+﻿using Fluent.Net.RuntimeAst;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using Fluent.Net.Ast;
+
+namespace Fluent.Net.RuntimeAst
+{
+    public abstract class Node
+    {
+        public virtual JObject ToJson()
+        {
+            return new JObject();
+        }
+    }
+
+    public class ExternalArgument : Node
+    {
+        public string Name { get; set; }
+    }
+
+    public class StringExpression : Node
+    {
+        public string Value { get; set; }
+    }
+
+    public class NumberExpression : Node
+    {
+        public string Value { get; set; }
+    }
+
+    public class Pattern : Node
+    {
+        public IEnumerable<Node> Elements { get; set; }
+    }
+
+    public class VariantName : Node
+    {
+        public string Name { get; set; }
+    }
+
+    public class Variant
+    {
+        public Node Key { get; set; }
+        public Node Value { get; set; }
+    }
+
+    public class VariantExpression : Node
+    {
+        public Node Id { get; set; }
+        public Node Key { get; set; }
+    }
+
+    public class SelectExpression : Node
+    {
+        public Node Expression { get; set; }
+        public IList<Variant> Variants { get; set; }
+        public int? DefaultIndex { get; set; }
+    }
+
+    public class AttributeExpression : Node
+    {
+        public MessageReference Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class MessageReference : Node
+    {
+        public string Name { get; set; }
+    }
+
+    public class CallExpression : Node
+    {
+        public Node Function { get; set; }
+        public IList<Node> Args { get; set; }
+    }
+
+    public class NamedArgument : Node
+    {
+        public string Name { get; set; }
+        public Node Value { get; set; }
+    }
+
+    public class Message // ?: Node
+    {
+        public IDictionary<string, Node> Attributes { get; set; }
+        public Node Value { get; set; }
+    }
+}
 
 namespace Fluent.Net
 {
+    struct RuntimeResult
+    {
+        public IEnumerable<string> Patterns;
+        public string String;
 
-#if FALSE
+        public RuntimeResult(IEnumerable<string> patterns)
+        {
+            Patterns = patterns;
+            String = null;
+        }
+
+        public RuntimeResult(string string_)
+        {
+            Patterns = null;
+            String = string_;
+        }
+    }
+
+    struct VariantResult
+    {
+        public IList<Variant> Variants;
+        public int? DefaultIndex;
+    }
+
     /// <summary>
     /// The `Parser` class is responsible for parsing FTL resources.
     /// 
@@ -21,30 +129,28 @@ namespace Fluent.Net
     /// There is an equivalent of this parser in syntax/parser which is
     /// generating full AST which is useful for FTL tools.
     /// </summary>
-    public class Parser
+    public class RuntimeParser
     {
         const int MAX_PLACEABLES = 100;
-        readonly static Regex entryIdentifierRe = new Regex("/-?[a-zA-Z][a-zA-Z0-9_-]*/y");
-        readonly static Regex identifierRe = new Regex("/[a-zA-Z][a-zA-Z0-9_-]*/y");
-        readonly static Regex functionIdentifierRe = new Regex("/^[A-Z][A-Z_?-]*$/");
+        const int Eof = ParserStream.Eof;
 
-        string _source;
-        int _index;
+        FtlParserStream _stream;
+        Dictionary<string, Message> _entries;
 
-        int _length { get { return _length; } }
-        int Peek(int n = 0)
+        int CurrentPeek { get => _stream.CurrentPeek; } 
+        int Current { get => _stream.Current; } 
+        bool CurrentPeekIs(int ch) => _stream.CurrentPeekIs(ch);
+        string CurrentAsString() => _stream.CurrentAsString();
+        int Next() => _stream.Next();
+        int Peek() => _stream.Peek();
+        void SkipInlineWs() => _stream.SkipInlineWs();
+        void SkipBlankLines() => _stream.SkipBlankLines();
+
+        public class Result
         {
-            return _index < _length - n ? _source[_index + n] : -1;
+            public IDictionary<string, Message> Entries { get; set; }
+            public IList<ParseException> Errors { get; set; }
         }
-
-        int SkipAndPeek(int n = 1)
-        {
-            _index = _index < _length - n ? _index + n : n;
-            return Peek();
-        }
-                ++_index;
-                ch = Peek();
-
 
         /// <summary>
         /// Parse FTL code into entries formattable by the MessageContext.
@@ -54,33 +160,31 @@ namespace Fluent.Net
         /// </summary>
         /// <param name='ftl'>The ftl text</param>
         /// @returns {Array<Object, Array>}
-        void GetResource(string ftl)
+        public Result GetResource(TextReader input)
         {
-            _source = ftl;
-            _index = 0;
+            _stream = new FtlParserStream(input);
+            _entries = new Dictionary<string, Message>();
+            var errors = new List<ParseException>();
 
-            // _length = string.length;
-            // entries = {};
-
-            // const errors = [];
-            // 
-            // SkipWS();
-            // while (_index < _length) {
-            //   try {
-            //     getEntry();
-            //   } catch (e) {
-            //     if (e instanceof ParseException) {
-            //       errors.push(e);
-            // 
-            //       skipToNextEntryStart();
-            //     } else {
-            //       throw e;
-            //     }
-            //   }
-            //   SkipWS();
-            // }
-            // 
-            // return [entries, errors];
+            SkipWs();
+            while (Current != Eof)
+            {
+                try
+                {
+                    GetEntry();
+                }
+                catch (ParseException e)
+                {
+                    errors.Add(e);
+                    _stream.SkipToNextEntryStart();
+                }
+                SkipWs();
+            }
+            return new Result()
+            {
+                Entries = _entries,
+                Errors = errors
+            };
         }
 
         /**
@@ -93,24 +197,26 @@ namespace Fluent.Net
         {
             // The index here should either be at the beginning of the file
             // or right after new line.
-            if (_index != 0 && _source[_index - 1] != '\n')
-            {
-                error("Expected an entry to start " +
-                    " at the beginning of the file or on a new line.");
-            }
-
-            var ch = _source[_index];
+            // TODO:
+            // if (_index != 0 && _source[_index - 1] != '\n')
+            // {
+            //     Error("Expected an entry to start " +
+            //         " at the beginning of the file or on a new line.");
+            // }
 
             // We don't care about comments or sections at runtime
+            int ch = Current;
+            int ch2 = Peek();
             if (ch == '/' ||
-                (ch == '#' && _index + 1 < _length &&
-                " #\n".IndexOf(_source[_index + 1]) >= 0))
+                (ch == '#' && (ch2 == '#' || ch2 == ' ' ||
+                               ch2 == '\r' || ch2 == '\n')))
             {
                 SkipComment();
                 return;
             }
 
-            if (ch == '[') {
+            if (ch == '[')
+            {
                 SkipSection();
                 return;
             }
@@ -118,32 +224,27 @@ namespace Fluent.Net
             GetMessage();
         }
 
-        /**
-        * Skip the section entry from the current index.
-        *
-        * @private
-        */
+        /// <summary>
+        /// Skip the section entry from the current index.
+        /// </summary>
         void SkipSection()
         {
-            _index += 1;
-            if (_source[_index] != '[')
+            if (Next() != '[')
             {
-                error("Expected '[[' to open a section");
+                Error("Expected '[[' to open a section");
             }
+            Next();
 
-            _index += 1;
-
-            SkipInlineWS();
+            SkipInlineWs();
             GetVariantName();
-            SkipInlineWS();
+            SkipInlineWs();
 
-            if (_source[_index] != ']' || _index + 1 >= _length ||
-                _source[_index + 1] != ']')
+            if (Current != ']' || Peek() != ']')
             {
-                error("Expected ']]' to close a section");
+                Error("Expected ']]' to close a section");
             }
-
-            _index += 2;
+            Next();
+            Next();
         }
 
         /**
@@ -156,59 +257,43 @@ namespace Fluent.Net
         {
             var id = GetEntryIdentifier();
 
-            SkipInlineWS();
+            SkipInlineWs();
 
-            if (_source[_index] == '=')
+            if (Current == '=')
             {
-                _index++;
+                Next();
             }
 
-            SkipInlineWS();
+            SkipInlineWs();
 
             var val = GetPattern();
 
             if (id.StartsWith("-") && val == null)
             {
-                error("Expected term to have a value");
+                Error("Expected term to have a value");
             }
 
-            let attrs = null;
+            IDictionary<string, Node> attrs = null;
 
-            if (_source[_index] == ' ')
+            if (Current == ' ')
             {
-                int lineStart = _index;
-                SkipInlineWS();
-
-                if (_source[_index] == '.')
+                _stream.PeekInlineWs();
+                if (_stream.CurrentPeekIs('.'))
                 {
-                    _index = lineStart;
                     attrs = GetAttributes();
                 }
             }
 
-            if (attrs == null && typeof val == 'string')
+            if (val == null && attrs == null)
             {
-                entries[id] = val;
+                Error("Expected message to have a value or attributes");
             }
-            else
+
+            _entries[id] = new Message()
             {
-                if (val == null && attrs == null)
-                {
-                    error("Expected message to have a value or attributes");
-                }
-
-                entries[id] = {};
-
-                if (val != null)
-                {
-                    entries[id].val = val;
-                }
-
-                if (attrs != null)
-                {
-                    entries[id].attrs = attrs;
-                }
-            }
+                Attributes = attrs,
+                Value = val
+            };
         }
 
         /**
@@ -216,106 +301,62 @@ namespace Fluent.Net
         *
         * @private
         */
-        void SkipWS()
+        void SkipWs()
         {
-            var ch = _source[_index];
-            while (ch == ' ' || ch == '\n' || ch == '\t' || ch == '\r') {
-                ch = _source[++_index];
-            }
-        }
-
-        bool IsWhite(char c)
-        {
-            return c == ' ' || c == '\t';
-        }
-
-        /**
-        * Skip inline whitespace (space and \t).
-        *
-        * @private
-        */
-        void SkipInlineWS()
-        {
-            for (; _index < _length &&
-                IsWhite(_source[_index]); ++_index)
+            while (Current == ' ' || Current == '\n' ||
+                   Current == '\t' || Current == '\r')
             {
+                Next();
             }
         }
 
-        /**
-        * Skip blank lines.
-        *
-        * @private
-        */
-        void SkipBlankLines()
+        void PeekWs()
         {
-            while (true) {
-                var ptr = _index;
-
-                SkipInlineWS();
-
-                if (_index < _length && _source[_index] == '\n')
-                {
-                    _index += 1;
-                }
-                else
-                {
-                    _index = ptr;
-                    break;
-                }
-            }
-        }
-
-        /**
-        * Get identifier using the provided regex.
-        *
-        * By default this will get identifiers of public messages, attributes and
-        * external arguments (without the $).
-        *
-        * @returns {String}
-        * @private
-        */
-        string GetIdentifier(Regex re = null)
-        {
-            re = re ?? identifierRe;
-            Match m = re.Match(_source, _index);
-
-            if (m == null) 
+            while (CurrentPeek == ' '  || CurrentPeek == '\n' ||
+                   CurrentPeek == '\t' || CurrentPeek == '\r')
             {
-                _index += 1;
-                error(
-                    $"Expected an identifier [${re}]");
+                Peek();
             }
-
-            _index = m.Index + m.Length;
-            return m.Value;
         }
 
+        string GetIdentifier(bool allowTerm = false)
+        {
+            var name = new StringBuilder();
+            name.Append((char)_stream.TakeIDStart(allowTerm));
+
+            int ch;
+            while ((ch = _stream.TakeIDChar()) != Eof)
+            {
+                name.Append((char)ch);
+            }
+
+            return name.ToString();
+        }
         /**
         * Get identifier of a Message or a Term (staring with a dash).
         *
         * @returns {String}
         * @private
         */
-        string getEntryIdentifier()
+        string GetEntryIdentifier()
         {
-            return GetIdentifier(entryIdentifierRe);
+            return GetIdentifier(true);
         }
 
-        bool IsVariantLeader(char c)
+        bool IsVariantLeader(int c)
         {
             return
                 (c >= 'a' && c <= 'z') ||
                 (c >= 'A' && c <= 'Z') ||
-                c == '_' || c == ' ';
+                c == '_';
         }
 
-        bool IsVariantChar(char c)
+        bool IsVariantChar(int c)
         {
             return
                 IsVariantLeader(c) ||
                 (c >= '0' && c <= '9') ||
-                c == '-';
+                c == '-' || c == '_';
         }
 
         /**
@@ -324,35 +365,45 @@ namespace Fluent.Net
         * @returns {Object}
         * @private
         */
-        void GetVariantName()
+        Node GetVariantName()
         {
-            string name = "";
-
-            var start = _index;
-
-            if (_index >= _length ||
-                !IsVariantLeader(_source[_index]))
+            if (!IsVariantLeader(Current) && Current != ' ')
             {
-                error(
-                    "Expected a keyword (starting with [a-zA-Z_])");
+                Error("Expected a keyword (starting with [a-zA-Z_ ])");
             }
 
-            for (++_index; _index < _length &&
-                 IsVariantChar(_source[_index]); ++_index)
+            var name = new StringBuilder();
+
+            for (; ; )
             {
+                // if we've got a space, peek ahead and check there's a valid
+                // variant name character after it -- the keyword can't end
+                // with a space
+                if (Current == ' ')
+                {
+                    int spaces = 1;
+                    for (; Peek() == ' '; ++spaces)
+                    {
+                    }
+                    if (!IsVariantChar(CurrentPeek))
+                    {
+                        break;
+                    }
+                    name.Append(' ', spaces);
+                    _stream.SkipToPeek();
+                }
+                else if (IsVariantChar(Current))
+                {
+                    name.Append((char)Current);
+                    Next();
+                }
+                else
+                {
+                    break;
+                }
             }
 
-            // If we encountered the end of name, we want to test if the last
-            // collected character is a space.
-            // If it is, we will backtrack to the last non-space character because
-            // the keyword cannot end with a space character.
-            for (; _index > start && _source[_index - 1] == ' '; --_index)
-            {
-            }
-
-            name += _source.Substring(start, _index - start);
-
-            // return { type: 'varname', name };
+            return new VariantName { Name = name.ToString() };
         }
 
         /**
@@ -361,25 +412,27 @@ namespace Fluent.Net
         * @returns {String}
         * @private
         */
-        string GetString()
+        Node GetString()
         {
-            var start = _index + 1;
+            Next(); // "
+            var result = new StringBuilder();
 
-            while (++_index < _length)
+            for (; ;)
             {
-                var ch = _source[_index];
-
-                if (ch == '\'')
+                if (Current == '"')
                 {
+                    Next(); // "
                     break;
                 }
-
-                if (ch == '\n')
+                if (Current == '\r' || Current == '\n' || Current == Eof)
                 {
-                    error("Unterminated string expression");
+                    Error("Unterminated string expression");
                 }
+                result.Append((char)Current);
+                Next();
             }
-            return _source.Substring(start, _index++ - start);
+
+            return new StringExpression() { Value = result.ToString() };
         }
 
         /**
@@ -390,59 +443,62 @@ namespace Fluent.Net
         * @returns {String|Array}
         * @private
         */
-        string GetPattern()
+        Node GetPattern()
         {
             // We're going to first try to see if the pattern is simple.
             // If it is we can just look for the end of the line and read the string.
             //
             // Then, if either the line contains a placeable opening `{` or the
             // next line starts an indentation, we switch to complex pattern.
-            int start = _index;
-            int eol = _source.IndexOf('\n', _index);
-
-            if (eol == -1)
+            var firstLineContent = new StringBuilder();
+            for (; CurrentPeek != '\r' && CurrentPeek != '\n' &&
+                   CurrentPeek != '{'  && CurrentPeek != Eof; _stream.Peek())
             {
-                eol = _length;
+                firstLineContent.Append((char)CurrentPeek);
             }
 
-            string firstLineContent = _source.Substring(start, eol - start);
-
-            if (firstLineContent.IndexOf('{') >= 0)
+            if (CurrentPeek == '{')
             {
+                _stream.ResetPeek();
                 return GetComplexPattern();
             }
 
-            _index = eol + 1;
-
-            SkipBlankLines();
-
-            if (_index < _length && _source[_index] != ' ')
+            _stream.PeekBlankLines();
+            if (CurrentPeek != ' ')
             {
                 // No indentation means we're done with this message. Callers should check
                 // if the return value here is null. It may be OK for messages, but not OK
                 // for terms, attributes and variants.
-                return firstLineContent;
+                _stream.SkipToPeek(); // consume the line
+                return firstLineContent.Length > 0 ?
+                    new StringExpression() { Value = firstLineContent.ToString() } :
+                    null;
             }
 
-            int lineStart = _index;
-
-            SkipInlineWS();
-
-            if (_index < _length && _source[_index] == '.')
+            int lineStart = _stream.GetPeekIndex();
+            _stream.PeekInlineWs();
+            if (CurrentPeek == '.')
             {
                 // The pattern is followed by an attribute. Rewind _index to the first
                 // column of the current line as expected by GetAttributes.
-                _index = lineStart;
-                return firstLineContent;
+                _stream.ResetPeek(lineStart);
+                _stream.SkipToPeek();
+                return firstLineContent.Length > 0 ?
+                    new StringExpression() { Value = firstLineContent.ToString() } :
+                    null;
             }
 
+            // It's a multiline pattern which started on the same line as the
+            // identifier. Reparse the whole pattern to make sure we get all of it.
             if (firstLineContent.Length > 0)
             {
-                // It's a multiline pattern which started on the same line as the
-                // identifier. Reparse the whole pattern to make sure we get all of it.
-                _index = start;
+                _stream.ResetPeek();
             }
-
+            // Otherwise parse up from here on in (having skipped inline ws)
+            else
+            {
+                _stream.SkipToPeek();
+            }
             return GetComplexPattern();
         }
 
@@ -455,99 +511,103 @@ namespace Fluent.Net
         * @returns {Array}
         * @private
         */
-        IEnumerable<string> GetComplexPattern()
+        Node GetComplexPattern()
         {
             var buffer = new StringBuilder();
-            var content = new List<string>();
+            var content = new List<Node>();
             int placeables = 0;
 
-            // let ch = _source[_index];
-
-            while (_index < _length)
+            while (Current != Eof)
             {
-                char ch = _source[_index];
-
                 // This block handles multi-line strings combining strings separated
                 // by new line.
-                if (ch == '\n')
+                if (Current == '\r' || Current == '\n')
                 {
-                    _index++;
+                    if (Current == '\r' && Peek() == '\n')
+                    {
+                        Next();
+                    }
+                    Next();
 
                     // We want to capture the start and end pointers
                     // around blank lines and add them to the buffer
                     // but only if the blank lines are in the middle
                     // of the string.
-                    int blankLinesStart = _index;
-                    SkipBlankLines();
-                    int blankLinesEnd = _index;
+                    _stream.BeginCapture();
+                    _stream.SkipBlankLines();
 
-                    if (_index >= _length || _source[_index] != ' ')
+                    if (Current != ' ')
                     {
+                        _stream.EndCapture();
                         break;
                     }
-                    SkipInlineWS();
+                    _stream.PeekInlineWs();
 
-                    if (_index < _length && (
-                        _source[_index] == '}' ||
-                        _source[_index] == '[' ||
-                        _source[_index] == '*' ||
-                        _source[_index] == '.'))
+                    if (CurrentPeek == '}' || CurrentPeek == '[' ||
+                        CurrentPeek == '*' || CurrentPeek == '.')
                     {
-                        _index = blankLinesEnd;
+                        _stream.EndCapture();
+                        _stream.ResetPeek();
                         break;
                     }
+                    buffer.Append(_stream.GetCapturedText());
+                    _stream.EndCapture();
+                    _stream.SkipToPeek();
 
-                    buffer.Append(_source, blankLinesStart, blankLinesEnd - blankLinesStart);
-
-                    if (buffer.Length > 0 || content.Count > 0) {
+                    if (buffer.Length > 0 || content.Count > 0)
+                    {
                         buffer.Append('\n');
                     }
                     continue;
                 }
                 // check if it's a valid escaped thing
-                else if (ch == '\\') 
+                else if (Current == '\\') 
                 {
-                    if (_index + 1 < _length)
+                    int ch2 = Peek();
+                    if (ch2 == '\'' || ch2 == '{' || ch2 == '\\')
                     {
-                        char ch2 = _source[_index + 1];
-                        if (ch2 == '\'' || ch2 == '{' || ch2 == '\\')
-                        {
-                            ch = ch2;
-                            ++_index;
-                        }
+                        buffer.Append((char)ch2);
+                        Next();
                     }
                 }
-                else if (ch == '{')
+                else if (Current == '{')
                 {
                     // Push the buffer to content array right before placeable
                     if (buffer.Length > 0)
                     {
-                        content.Add(buffer.ToString());
+                        content.Add(new StringExpression() { Value = buffer.ToString() });
                     }
                     if (placeables > MAX_PLACEABLES - 1)
                     {
-                        error(
+                        Error(
                             $"Too many placeables, maximum allowed is {MAX_PLACEABLES}");
                     }
                     buffer.Length = 0;
                     content.Add(GetPlaceable());
 
-                    _index++;
+                    Next();
                     placeables++;
                     continue;
                 }
 
-                buffer.Append(ch);
-                _index++;
-                ch = _source[_index];
+                buffer.Append((char)Current);
+                Next();
             }
 
+            StringExpression extra = null;
             if (buffer.Length > 0)
             {
-                content.Add(buffer.ToString());
+                extra = new StringExpression() { Value = buffer.ToString() };
             }
-
-            return content;
+            if (content.Count == 0)
+            {
+                return extra;
+            }
+            if (extra != null)
+            {
+                content.Add(extra);
+            }
+            return new Pattern() { Elements = content };
         }
 
         /**
@@ -557,96 +617,88 @@ namespace Fluent.Net
         * @returns {Object}
         * @private
         */
-        string GetPlaceable()
+        Node GetPlaceable()
         {
-            int start = ++_index;
-
-            SkipWS();
-
-            if (_index < _length &&
-                (_source[_index] == '*' ||
-                (_source[_index] == '[' &&
-                 _index + 1 < _length && 
-                 _source[_index + 1] != ']')))
+            Next();
+            PeekWs();
+            int peekIndex = _stream.GetPeekIndex();
+            if (CurrentPeekIs('*') ||
+                CurrentPeekIs('[') && Peek() != ']')
             {
-                const variants = GetVariants();
-
-                /* TODO
-                return {
-                type: 'sel',
-                exp: null,
-                vars: variants[0],
-                def: variants[1]
-                };*/
+                _stream.ResetPeek(peekIndex);
+                _stream.SkipToPeek();
+                
+                var variantResult = GetVariants();
+                return new SelectExpression()
+                {
+                    Variants = variantResult.Variants,
+                    DefaultIndex = variantResult.DefaultIndex
+                };
             }
 
             // Rewind the index and only support in-line white-space now.
-            _index = start;
-            SkipInlineWS();
+            _stream.SkipInlineWs();
 
-            const selector = getSelectorExpression();
+            var selector = GetSelectorExpression();
 
-            SkipWS();
+            SkipWs();
 
-            int ch = Peek();
-
-            if (ch == '}')
+            if (Current == '}')
             {
-                if (selector.type == 'attr' && selector.id.name.startsWith('-'))
+                if (selector is AttributeExpression ae2 && ae2.Id.Name.StartsWith("-"))
                 {
-                    error(
+                    Error(
                         "Attributes of private messages cannot be interpolated.");
                 }
 
                 return selector;
             }
 
-            if (ch != '-' || Peek(1) != '>')
+            if (Current != '-' || Peek() != '>')
             {
-                error("Expected '}' or '->'");
+                Error("Expected '}' or '->'");
             }
 
-            if (selector.type == 'ref')
+            if (selector is MessageReference)
             {
-                error("Message references cannot be used as selectors.");
+                Error("Message references cannot be used as selectors.");
             }
 
-            if (selector.type == 'var')
+            if (selector is VariantExpression)
             {
-                error("Variants cannot be used as selectors.");
+                Error("Variants cannot be used as selectors.");
             }
 
-            if (selector.type == 'attr' && !selector.id.name.startsWith('-'))
+            if (selector is AttributeExpression ae && !ae.Id.Name.StartsWith("-"))
             {
-                error(
+                Error(
                     "Attributes of public messages cannot be used as selectors."
                 );
             }
 
+            Next();
+            Next(); // ->
 
-            _index += 2; // ->
+            SkipInlineWs();
 
-            SkipInlineWS();
-
-            if (Peek() != '\n')
+            if (Current != '\n')
             {
-                error("Variants should be listed in a new line");
+                Error("Variants should be listed in a new line");
             }
 
-            SkipWS();
+            SkipWs();
 
-            const variants = GetVariants();
-
-            if (variants[0].length == 0)
+            var variants = GetVariants();
+            if (variants.Variants.Count == 0)
             {
-                error("Expected members for the select expression");
+                Error("Expected members for the select expression");
             }
 
-            return {
-                type: 'sel',
-                exp: selector,
-                vars: variants[0],
-                def: variants[1]
+            return new SelectExpression()
+            {
+                Expression = selector,
+                Variants = variants.Variants,
+                DefaultIndex = variants.DefaultIndex
             };
         }
 
@@ -656,56 +708,47 @@ namespace Fluent.Net
         * @returns {Object}
         * @private
         */
-        getSelectorExpression()
+        Node GetSelectorExpression()
         {
-            const literal = getLiteral();
-
-            if (literal.type != 'ref')
+            Node literal = GetLiteral();
+            if (!(literal is MessageReference))
             {
                 return literal;
             }
+            var messageReference = (MessageReference)literal;
 
-            if (_source[_index] == '.') {
-                _index++;
-
-                const name = GetIdentifier();
-                _index++;
-                return {
-                type: 'attr',
-                id: literal,
-                name
+            if (Current == '.')
+            {
+                Next();
+                var name = GetIdentifier();
+                Next();
+                return new AttributeExpression() 
+                {
+                    Id = messageReference,
+                    Name = name 
                 };
             }
 
-            if (_source[_index] == '[') {
-                _index++;
-
-                const key = getVariantKey();
-                _index++;
-                return {
-                type: 'var',
-                id: literal,
-                key
-                };
+            if (Current == '[')
+            {
+                Next();
+                var key = GetVariantKey();
+                Next();
+                return new VariantExpression() { Id = literal, Key = key };
             }
 
-            if (_source[_index] == '(') {
-                _index++;
-                const args = getCallArgs();
+            if (Current == '(')
+            {
+                Next();
+                var args = GetCallArgs();
 
-                if (!functionIdentifierRe.test(literal.name)) {
-                error("Function names must be all upper-case");
+                if (!Parser.s_fnName.IsMatch(messageReference.Name))
+                {
+                    Error("Function names must be all upper-case");
                 }
 
-                _index++;
-
-                literal.type = 'fun';
-
-                return {
-                type: 'call',
-                fun: literal,
-                args
-                };
+                Next();
+                return new CallExpression() { Function = literal, Args = args };
             }
 
             return literal;
@@ -717,122 +760,135 @@ namespace Fluent.Net
         * @returns {Array}
         * @private
         */
-        getCallArgs() {
-        const args = [];
+        List<Node> GetCallArgs()
+        {
+            var args = new List<Node>();
 
-        while (_index < _length) {
-            SkipInlineWS();
+            for (; ;)
+            {
+                _stream.SkipInlineWs();
 
-            if (_source[_index] == ')') {
-            return args;
-            }
-
-            const exp = getSelectorExpression();
-
-            // MessageReference in this place may be an entity reference, like:
-            // `call(foo)`, or, if it's followed by `:` it will be a key-value pair.
-            if (exp.type != 'ref') {
-            args.push(exp);
-            } else {
-            SkipInlineWS();
-
-            if (_source[_index] == ':') {
-                _index++;
-                SkipInlineWS();
-
-                const val = getSelectorExpression();
-
-                // If the expression returned as a value of the argument
-                // is not a quote delimited string or number, throw.
-                //
-                // We don't have to check here if the pattern is quote delimited
-                // because that's the only type of string allowed in expressions.
-                if (typeof val == 'string' ||
-                    Array.isArray(val) ||
-                    val.type == 'num') {
-                args.push({
-                    type: 'narg',
-                    name: exp.name,
-                    val
-                });
-                } else {
-                _index = _source.lastIndexOf(':', _index) + 1;
-                error(
-                    'Expected string in quotes, number.');
+                if (Current == ')')
+                {
+                    break;
                 }
 
-            } else {
-                args.push(exp);
-            }
-            }
+                var exp = GetSelectorExpression();
 
-            SkipInlineWS();
+                // MessageReference in this place may be an entity reference, like:
+                // `call(foo)`, or, if it's followed by `:` it will be a key-value pair.
+                if (!(exp is MessageReference))
+                {
+                    args.Add(exp);
+                }
+                else
+                {
+                    _stream.PeekInlineWs();
 
-            if (_source[_index] == ')') {
-            break;
-            } else if (_source[_index] == ',') {
-            _index++;
-            } else {
-            error("Expected ',' or ')'");
+                    if (Current == ':')
+                    {
+                        Next();
+                        SkipInlineWs();
+
+                        var val = GetSelectorExpression();
+
+                        // If the expression returned as a value of the argument
+                        // is not a quote delimited string or number, throw.
+                        //
+                        // We don't have to check here if the pattern is quote delimited
+                        // because that's the only type of string allowed in expressions.
+                        if (val is StringExpression ||
+                            val is NumberExpression ||
+                            val is Pattern)
+                        {
+                            args.Add(new NamedArgument()
+                            {
+                                Name = ((MessageReference)exp).Name,
+                                Value = val
+                            });
+
+                        }
+                        else
+                        {
+                            // XXX: can't seek backwards
+                            // do we need PeekSelectorExpression or can we leave without this?
+                            // _index = _source.lastIndexOf(':', _index) + 1;
+                            Error("Expected string in quotes, number.");
+                        }
+
+                    }
+                    else
+                    {
+                        args.Add(exp);
+                    }
+                }
+
+                if (Current == ')')
+                {
+                    break;
+                }
+                if (Current == ',')
+                {
+                    Next();
+                }
+                else
+                {
+                    Error("Expected ',' or ')'");
+                }
             }
+            return args;
         }
 
-        return args;
-        }
-
-        /**
-        * Parses an FTL Number.
-        *
-        * @returns {Object}
-        * @private
-        */
-        string getNumber()
+        /// <summary>
+        /// Parses an FTL Number.
+        /// </summary>
+        /// 
+        /// @returns {Object}
+        Node GetNumber()
         {
             var num = new StringBuilder();
-            int ch = Peek();
 
             // The number literal may start with negative sign `-`.
-            if (ch == 45) {
+            if (Current == '-')
+            {
                 num.Append('-');
-                ch = SkipAndPeek();
+                Next();
             }
 
             // next, we expect at least one digit
-            if (ch < '0' || ch > '9') {
-                error($"Unknown literal '{ch}'");
+            if (Current < '0' || Current > '9')
+            {
+                Error($"Unknown literal '{CurrentAsString()}'");
             }
 
             // followed by potentially more digits
             do
             {
-                num.Append((char)ch);
-                ++_index;
-                ch = Peek();
+                num.Append((char)Current);
+                Next();
             }
-            while (ch >= '0' && ch <= '9');
+            while (Current >= '0' && Current <= '9');
 
             // followed by an optional decimal separator `.`
-            if (ch == '.')
+            if (Current == '.')
             {
-                num += _source[_index++];
-                cc = _source.charCodeAt(_index);
+                num.Append('.');
 
                 // followed by at least one digit
-                if (cc < 48 || cc > 57) {
-                error($"Unknown literal '{num}'");
+                if (Current < '0' || Current > '9')
+                {
+                    Error($"Unknown literal '{CurrentAsString()}'");
                 }
 
                 // and optionally more digits
-                while (cc >= 48 && cc <= 57) {
-                num += _source[_index++];
-                cc = _source.charCodeAt(_index);
+                while (Current >= '0' && Current <= '9')
+                {
+                    num.Append((char)Current);
+                    Next();
                 }
             }
 
-            return {
-                type: 'num',
-                val: num
-            };
+            return new NumberExpression() { Value = num.ToString() };
         }
 
         /**
@@ -841,53 +897,44 @@ namespace Fluent.Net
         * @returns {Object}
         * @private
         */
-        IDictionary<string, string> GetAttributes() {
-            var attrs = new Dictionary<string, string>();
+        IDictionary<string, Node> GetAttributes()
+        {
+            var attrs = new Dictionary<string, Node>();
 
-            while (_index < _length)
+            while (Current != Eof)
             {
-                var ch = Peek();
-                if (ch != ' ')
+                if (Current != ' ')
                 {
                     break;
                 }
-                SkipInlineWS();
+                SkipInlineWs();
 
-                if (ch != '.')
+                if (Current != '.')
                 {
                     break;
                 }
-                _index++;
+                Next();
 
                 var key = GetIdentifier();
 
-                SkipInlineWS();
+                SkipInlineWs();
                 
-                ch = Peek();
-                if (ch != '=')
+                if (Current != '=')
                 {
-                    error("Expected '='");
+                    Error("Expected '='");
                 }
-                _index++;
+                Next();
 
-                SkipInlineWS();
+                SkipInlineWs();
 
                 var val = GetPattern();
 
                 if (val == null)
                 {
-                    error("Expected attribute to have a value");
+                    Error("Expected attribute to have a value");
                 }
 
                 attrs[key] = val;
-                /* TODO:
-                if (typeof val == 'string') {
-                attrs[key] = val;
-                } else {
-                attrs[key] = {
-                    val
-                };
-                }*/
 
                 SkipBlankLines();
             }
@@ -901,45 +948,49 @@ namespace Fluent.Net
         * @returns {Array}
         * @private
         */
-        GetVariants() {
-            const variants = [];
-            let index = 0;
-            let defaultIndex;
+        VariantResult GetVariants()
+        {
+            var result = new VariantResult()
+            {
+                Variants = new List<Variant>()
+            };
 
-            while (_index < _length) {
-                const ch = _source[_index];
-
-                if ((ch != '[' || _source[_index + 1] == '[') &&
-                    ch != '*') {
-                break;
+            while (Current != Eof)
+            {
+                if ((Current != '[' || Peek() == '[') &&
+                    Current != '*')
+                {
+                    break;
                 }
-                if (ch == '*') {
-                _index++;
-                defaultIndex = index;
-                }
-
-                if (_source[_index] != '[') {
-                error("Expected '['");
-                }
-
-                _index++;
-
-                const key = getVariantKey();
-
-                SkipInlineWS();
-
-                const val = GetPattern();
-
-                if (val == null) {
-                error("Expected variant to have a value");
+                if (Current == '*')
+                {
+                    Next();
+                    result.DefaultIndex = result.Variants.Count;
                 }
 
-                variants[index++] = {key, val};
+                if (Current != '[')
+                {
+                    Error("Expected '['");
+                }
+                Next();
 
-                SkipWS();
+                var key = GetVariantKey();
+
+                SkipInlineWs();
+
+                var val = GetPattern();
+
+                if (val == null)
+                {
+                    Error("Expected variant to have a value");
+                }
+
+                result.Variants.Add(new Variant() { Key = key, Value = val });
+
+                SkipWs();
             }
 
-            return [variants, defaultIndex];
+            return result;
         }
 
         /**
@@ -948,155 +999,99 @@ namespace Fluent.Net
         * @returns {String}
         * @private
         */
-        getVariantKey() {
-        // VariantKey may be a Keyword or Number
+        Node GetVariantKey()
+        {
+            // VariantKey may be a Keyword or Number
+            Node literal;
+            if ((Current >= '0' && Current <= '9') || Current == '-')
+            {
+                literal = GetNumber();
+            }
+            else
+            {
+                literal = GetVariantName();
+            }
 
-        const cc = _source.charCodeAt(_index);
-        let literal;
+            if (Current != ']')
+            {
+                Error("Expected ']'");
+            }
+            Next();
 
-        if ((cc >= 48 && cc <= 57) || cc == 45) {
-            literal = getNumber();
-        } else {
-            literal = GetVariantName();
+            return literal;
         }
 
-        if (_source[_index] != ']') {
-            error("Expected ']'");
+        /// <summary>
+        /// Parses an FTL literal.
+        /// </summary>
+        Node GetLiteral()
+        {
+            if (Current == '$')
+            {
+                Next();
+                var name = GetIdentifier();
+                return new ExternalArgument() { Name = name };
+            }
+
+            if (_stream.IsEntryIDStart())
+            {
+                string name = GetEntryIdentifier();
+                return new MessageReference { Name = name };
+            }
+
+            if (_stream.IsNumberStart())
+            {
+                return GetNumber();
+            }
+
+            if (Current == '"')
+            {
+                return GetString();
+            }
+
+            // the compiler can't see that Error always throws
+            throw new ParseException("Expected literal");
         }
 
-        _index++;
-        return literal;
-        }
+        /// <summary>
+        /// Skips an FTL comment.
+        /// </summary>
+        void SkipComment()
+        {
+            // At runtime, we don't care about comments so we just have
+            // to parse them properly and skip their content.
+            while (Current != Eof)
+            {
+                if (Current == '\r' || Current == '\n')
+                {
+                    _stream.SkipNewLine();
 
-        /**
-        * Parses an FTL literal.
-        *
-        * @returns {Object}
-        * @private
-        */
-        getLiteral() {
-        const cc0 = _source.charCodeAt(_index);
-
-        if (cc0 == 36) { // $
-            _index++;
-            return {
-            type: 'ext',
-            name: GetIdentifier()
-            };
-        }
-
-        const cc1 = cc0 == 45 // -
-            // Peek at the next character after the dash.
-            ? _source.charCodeAt(_index + 1)
-            // Or keep using the character at the current index.
-            : cc0;
-
-        if ((cc1 >= 97 && cc1 <= 122) || // a-z
-            (cc1 >= 65 && cc1 <= 90)) { // A-Z
-            return {
-            type: 'ref',
-            name: getEntryIdentifier()
-            };
-        }
-
-        if ((cc1 >= 48 && cc1 <= 57)) { // 0-9
-            return getNumber();
-        }
-
-        if (cc0 == 34) { // '
-            return GetString();
-        }
-
-        error("Expected literal");
-        }
-
-        /**
-        * Skips an FTL comment.
-        *
-        * @private
-        */
-        SkipComment() {
-        // At runtime, we don't care about comments so we just have
-        // to parse them properly and skip their content.
-        let eol = _source.indexOf('\n', _index);
-
-        while (eol != -1 &&
-            ((_source[eol + 1] == '/' && _source[eol + 2] == '/') ||
-            (_source[eol + 1] == '#' &&
-                [' ', '#'].includes(_source[eol + 2])))) {
-            _index = eol + 3;
-
-            eol = _source.indexOf('\n', _index);
-
-            if (eol == -1) {
-            break;
+                    int next = Peek();
+                    if ((Current == '/' && next == '/') ||
+                        (Current == '#' && (next == ' ' || next == '#')))
+                    {
+                        Next();
+                        Next();
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    Next();
+                }
             }
         }
 
-        if (eol == -1) {
-            _index = _length;
-        } else {
-            _index = eol + 1;
-        }
-        }
-
-        /**
-        * Creates a error object with a given message.
-        *
-        * @param {String} message
-        * @returns {Object}
-        * @private
-        */
-        static void error(string message)
+        /// <summary>
+        /// Throws a ParseException with a given message.
+        /// </summary>
+        /// <param name="message">The error message</param>
+        static void Error(string message)
         {
             throw new ParseException(message);
         }
-
-        /**
-        * Skips to the beginning of a next entry after the current position.
-        * This is used to mark the boundary of junk entry in case of error,
-        * and recover from the returned position.
-        *
-        * @private
-        */
-        skipToNextEntryStart() {
-        let start = _index;
-
-        while (true) {
-            if (start == 0 || _source[start - 1] == '\n') {
-            const cc = _source.charCodeAt(start);
-
-            if ((cc >= 97 && cc <= 122) || // a-z
-                (cc >= 65 && cc <= 90) || // A-Z
-                    cc == 47 || cc == 91) { // /[
-                _index = start;
-                return;
-            }
-            }
-
-            start = _source.indexOf('\n', start);
-
-            if (start == -1) {
-            _index = _length;
-            return;
-            }
-            start++;
-        }
-        }
-}
-
-/**
- * Parses an FTL string using RuntimeParser and returns the generated
- * object with entries and a list of errors.
- *
- * @param {String} string
- * @returns {Array<Object, Array>}
- */
-default function parse(string) {
-  const parser = new RuntimeParser();
-  return parser.getResource(string);
-}
-
     }
-#endif
 }

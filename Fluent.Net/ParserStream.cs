@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -32,6 +33,11 @@ namespace Fluent.Net
             {
                 _captureBuf.Clear();
             }
+        }
+
+        public void EndCapture()
+        {
+            _captureBuf = null;
         }
 
         public string GetCapturedText()
@@ -92,6 +98,12 @@ namespace Fluent.Net
         public bool CurrentIs(int ch)
         {
             return Current == ch;
+        }
+
+        public string CurrentAsString()
+        {
+            int ch = Current;
+            return ch == Eof ? "Eof" : ((char)ch).ToString();
         }
 
         public int CurrentPeek
@@ -201,8 +213,8 @@ namespace Fluent.Net
                     }
                 }
 
-                Current = _buf[diff - 1];
-                _buf.RemoveRange(0, diff);
+                Current = diff > _buf.Count ? Eof : _buf[diff - 1];
+                _buf.RemoveRange(0, Math.Min(_buf.Count, diff));
             }
 
             _index = _peekIndex;

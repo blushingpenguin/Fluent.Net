@@ -10,12 +10,12 @@ namespace Fluent.Net
         {
         }
 
-        static bool IsInlineWs(int c)
+        public static bool IsInlineWs(int c)
         {
             return c == ' ' || c == '\t';
         }
 
-        public void SkipInlineWS()
+        public void SkipInlineWs()
         {
             while (IsInlineWs(Current))
             {
@@ -23,7 +23,7 @@ namespace Fluent.Net
             }
         }
 
-        public void PeekInlineWS()
+        public void PeekInlineWs()
         {
             for (int ch = CurrentPeek; IsInlineWs(ch); ch = Peek())
             {
@@ -34,7 +34,7 @@ namespace Fluent.Net
         {
             while (true)
             {
-                PeekInlineWS();
+                PeekInlineWs();
 
                 if (CurrentPeekIs('\n') ||
                     (CurrentPeekIs('\r') && Peek() == '\n'))
@@ -56,7 +56,7 @@ namespace Fluent.Net
             {
                 int lineStart = GetPeekIndex();
 
-                PeekInlineWS();
+                PeekInlineWs();
 
                 if (CurrentPeekIs('\n') ||
                     (CurrentPeekIs('\r') && Peek() == '\n'))
@@ -74,7 +74,7 @@ namespace Fluent.Net
         public void SkipIndent()
         {
             SkipBlankLines();
-            SkipInlineWS();
+            SkipInlineWs();
         }
 
         public void ExpectChar(int ch)
@@ -110,7 +110,7 @@ namespace Fluent.Net
             ExpectNewLine();
             SkipBlankLines();
             ExpectChar(' ');
-            SkipInlineWS();
+            SkipInlineWs();
         }
 
         public bool TakeCharIf(int ch)
@@ -200,7 +200,7 @@ namespace Fluent.Net
 
         public bool IsPeekPatternStart()
         {
-            PeekInlineWS();
+            PeekInlineWs();
             int ch = CurrentPeek;
 
             // Inline Patterns may start with any char.
@@ -289,7 +289,7 @@ namespace Fluent.Net
 
             int ptr = GetPeekIndex();
 
-            PeekInlineWS();
+            PeekInlineWs();
 
             if (GetPeekIndex() - ptr == 0)
             {
@@ -324,7 +324,7 @@ namespace Fluent.Net
 
             int ptr = GetPeekIndex();
 
-            PeekInlineWS();
+            PeekInlineWs();
 
             if (GetPeekIndex() - ptr == 0)
             {
@@ -355,7 +355,7 @@ namespace Fluent.Net
 
             int ptr = GetPeekIndex();
 
-            PeekInlineWS();
+            PeekInlineWs();
 
             if (GetPeekIndex() - ptr == 0)
             {

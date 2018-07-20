@@ -1,0 +1,40 @@
+{
+  "key": "Value",
+  "key2": {
+    "attrs": {
+      "attr": "Attribute"
+    }
+  },
+  "key3": {
+    "val": "Value\nValue2\n\n\nValue 4\nValue3",
+    "attrs": {
+      "attr2": "Attr 2"
+    }
+  },
+  "key5": "Value 5",
+  "key6": {
+    "val": [
+      {
+        "type": "sel",
+        "exp": null,
+        "vars": [
+          {
+            "key": {
+              "type": "varname",
+              "name": "one"
+            },
+            "val": "One"
+          },
+          {
+            "key": {
+              "type": "varname",
+              "name": "two"
+            },
+            "val": "Two"
+          }
+        ],
+        "def": 1
+      }
+    ]
+  }
+}
