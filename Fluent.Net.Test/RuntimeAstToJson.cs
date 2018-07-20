@@ -7,7 +7,7 @@ using Fluent.Net.RuntimeAst;
 
 namespace Fluent.Net.Test
 {
-    class RuntimeAstToJson
+    static class RuntimeAstToJson
     {
         public static JToken ToJson(Node node)
         {

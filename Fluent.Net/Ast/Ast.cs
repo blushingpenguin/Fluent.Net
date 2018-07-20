@@ -1,8 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Fluent.Net.Ast
 {
@@ -15,11 +11,6 @@ namespace Fluent.Net.Ast
      */
     public abstract class BaseNode
     {
-        // BaseNode() { }
-        public virtual JObject ToJson()
-        {
-            return new JObject();
-        }
     }
 
     /*
@@ -32,13 +23,6 @@ namespace Fluent.Net.Ast
         internal void AddSpan(int start, int end)
         {
             Span = new Span(start, end);
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["span"] = Span.ToJson();
-            return obj;
         }
     }
 
@@ -54,14 +38,6 @@ namespace Fluent.Net.Ast
         {
             Body = body;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Resource";
-            obj["body"] = new JArray(Body.Select(x => x.ToJson()));
-            return obj;
-        }
     }
 
     public abstract class Entry : SyntaxNode
@@ -72,13 +48,6 @@ namespace Fluent.Net.Ast
         public void AddAnnotation(Annotation annotation)
         {
             _annotations.Add(annotation);
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["annotations"] = new JArray(Annotations.Select(x => x.ToJson()));
-            return obj;
         }
     }
 
@@ -101,17 +70,6 @@ namespace Fluent.Net.Ast
             Attributes = attributes;
             Comment = comment;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["attributes"] = Attributes == null ? new JArray() :
-                new JArray(Attributes.Select(x => x.ToJson()));
-            obj["comment"] = Comment == null ? null : Comment.ToJson();
-            obj["id"] = Id == null ? null : Id.ToJson();
-            obj["value"] = Value == null ? null : Value.ToJson();
-            return obj;
-        }
     }
 
     public class Message : MessageTermBase
@@ -125,13 +83,6 @@ namespace Fluent.Net.Ast
             base(id, value, attributes, comment)
         {
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Message";
-            return obj;
-        }
     }
 
     public class Term : MessageTermBase
@@ -144,13 +95,6 @@ namespace Fluent.Net.Ast
             IReadOnlyList<Attribute> attributes, Comment comment = null) :
             base(id, value, attributes, comment)
         {
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Term";
-            return obj;
         }
     }
 
@@ -166,14 +110,6 @@ namespace Fluent.Net.Ast
         {
             Elements = elements;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Pattern";
-            obj["elements"] = new JArray(Elements.Select(x => x.ToJson()));
-            return obj;
-        }
     }
 
     public class TextElement : SyntaxNode
@@ -188,14 +124,6 @@ namespace Fluent.Net.Ast
         {
             Value = value;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "TextElement";
-            obj["value"] = Value;
-            return obj;
-        }
     }
 
     public class Placeable : SyntaxNode
@@ -209,14 +137,6 @@ namespace Fluent.Net.Ast
         public Placeable(Expression expression)
         {
             Expression = expression;
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Placeable";
-            obj["expression"] = Expression.ToJson();
-            return obj;
         }
     }
 
@@ -236,14 +156,6 @@ namespace Fluent.Net.Ast
         {
             Value = value;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "StringExpression";
-            obj["value"] = Value;
-            return obj;
-        }
     }
 
     public class NumberExpression : Expression
@@ -257,14 +169,6 @@ namespace Fluent.Net.Ast
         public NumberExpression(string value)
         {
             Value = value;
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "NumberExpression";
-            obj["value"] = Value;
-            return obj;
         }
     }
 
@@ -280,14 +184,6 @@ namespace Fluent.Net.Ast
         {
             Id = id;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "MessageReference";
-            obj["id"] = Id.ToJson();
-            return obj;
-        }
     }
 
     public class ExternalArgument : Expression
@@ -301,14 +197,6 @@ namespace Fluent.Net.Ast
         public ExternalArgument(Identifier id)
         {
             Id = id;
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "ExternalArgument";
-            obj["id"] = Id.ToJson();
-            return obj;
         }
     }
 
@@ -326,16 +214,6 @@ namespace Fluent.Net.Ast
             Expression = expression;
             Variants = variants;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "SelectExpression";
-            obj["expression"] = Expression == null ? null : Expression.ToJson();
-            obj["variants"] = Variants == null ? new JArray() :
-                new JArray(Variants.Select(x => x.ToJson()));
-            return obj;
-        }
     }
 
     public class AttributeExpression : Expression
@@ -351,15 +229,6 @@ namespace Fluent.Net.Ast
         {
             Id = id;
             Name = name;
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "AttributeExpression";
-            obj["id"] = Id.ToJson();
-            obj["name"] = Name.ToJson();
-            return obj;
         }
     }
 
@@ -377,15 +246,6 @@ namespace Fluent.Net.Ast
             Reference = reference;
             Key = key;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "VariantExpression";
-            obj["ref"] = Reference.ToJson();
-            obj["key"] = Key.ToJson();
-            return obj;
-        }
     }
 
     public class CallExpression : Expression
@@ -402,16 +262,6 @@ namespace Fluent.Net.Ast
             Callee = callee;
             Args = args;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "CallExpression";
-            obj["callee"] = Callee.ToJson();
-            obj["args"] = Args == null ? new JArray() :
-                new JArray(Args.Select(x => x.ToJson()));
-            return obj;
-        }
     }
 
     public class Attribute : SyntaxNode
@@ -427,15 +277,6 @@ namespace Fluent.Net.Ast
         {
             Id = id;
             Value = value;
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Attribute";
-            obj["id"] = Id.ToJson();
-            obj["value"] = Value.ToJson();
-            return obj;
         }
     }
 
@@ -455,16 +296,6 @@ namespace Fluent.Net.Ast
             Value = value;
             IsDefault = isDefault;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Variant";
-            obj["default"] = IsDefault;
-            obj["key"] = Key.ToJson();
-            obj["value"] = Value.ToJson();
-            return obj;
-        }
     }
 
     public class NamedArgument : SyntaxNode
@@ -481,15 +312,6 @@ namespace Fluent.Net.Ast
             Name = name;
             Value = value;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "NamedArgument";
-            obj["name"] = Name.ToJson();
-            obj["value"] = Value.ToJson();
-            return obj;
-        }
     }
 
     public class Identifier : SyntaxNode
@@ -504,14 +326,6 @@ namespace Fluent.Net.Ast
         {
             Name = name;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Identifier";
-            obj["name"] = Name;
-            return obj;
-        }
     }
 
     public class VariantName : Identifier
@@ -523,13 +337,6 @@ namespace Fluent.Net.Ast
         public VariantName(string name) :
             base(name)
         {
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "VariantName";
-            return obj;
         }
     }
 
@@ -545,13 +352,6 @@ namespace Fluent.Net.Ast
         {
             Content = content;
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["content"] = Content;
-            return obj;
-        }
     }
 
     public class Comment : BaseComment
@@ -563,13 +363,6 @@ namespace Fluent.Net.Ast
         public Comment(string content) :
             base(content)
         {
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Comment";
-            return obj;
         }
     }
 
@@ -583,13 +376,6 @@ namespace Fluent.Net.Ast
             base(content)
         {
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "GroupComment";
-            return obj;
-        }
     }
 
     public class ResourceComment : BaseComment
@@ -602,13 +388,6 @@ namespace Fluent.Net.Ast
             base(content)
         {
         }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "ResourceComment";
-            return obj;
-        }
     }
 
     public class Function : Identifier
@@ -620,13 +399,6 @@ namespace Fluent.Net.Ast
         public Function(string name) :
             base(name)
         {
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Function";
-            return obj;
         }
     }
 
@@ -641,14 +413,6 @@ namespace Fluent.Net.Ast
         public Junk(string content)
         {
             Content = content;
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Junk";
-            obj["content"] = Content;
-            return obj;
         }
     }
 
@@ -665,15 +429,6 @@ namespace Fluent.Net.Ast
         {
             Start = start;
             End = end;
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Span";
-            obj["start"] = Start;
-            obj["end"] = End;
-            return obj;
         }
     }
 
@@ -693,16 +448,6 @@ namespace Fluent.Net.Ast
             Code = code;
             Args = args;
             Message = message;
-        }
-
-        public override JObject ToJson()
-        {
-            var obj = base.ToJson();
-            obj["type"] = "Annotation";
-            obj["args"] = Args == null ? new JArray() : new JArray(Args);
-            obj["code"] = Code;
-            obj["message"] = Message;
-            return obj;
         }
     }
 }

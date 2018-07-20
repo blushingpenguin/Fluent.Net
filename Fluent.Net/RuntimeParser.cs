@@ -1,94 +1,7 @@
 ﻿using Fluent.Net.RuntimeAst;
-using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
-
-namespace Fluent.Net.RuntimeAst
-{
-    public abstract class Node
-    {
-        public virtual JObject ToJson()
-        {
-            return new JObject();
-        }
-    }
-
-    public class ExternalArgument : Node
-    {
-        public string Name { get; set; }
-    }
-
-    public class StringExpression : Node
-    {
-        public string Value { get; set; }
-    }
-
-    public class NumberExpression : Node
-    {
-        public string Value { get; set; }
-    }
-
-    public class Pattern : Node
-    {
-        public IEnumerable<Node> Elements { get; set; }
-    }
-
-    public class VariantName : Node
-    {
-        public string Name { get; set; }
-    }
-
-    public class Variant
-    {
-        public Node Key { get; set; }
-        public Node Value { get; set; }
-    }
-
-    public class VariantExpression : Node
-    {
-        public Node Id { get; set; }
-        public Node Key { get; set; }
-    }
-
-    public class SelectExpression : Node
-    {
-        public Node Expression { get; set; }
-        public IList<Variant> Variants { get; set; }
-        public int? DefaultIndex { get; set; }
-    }
-
-    public class AttributeExpression : Node
-    {
-        public MessageReference Id { get; set; }
-        public string Name { get; set; }
-    }
-
-    public class MessageReference : Node
-    {
-        public string Name { get; set; }
-    }
-
-    public class CallExpression : Node
-    {
-        public Node Function { get; set; }
-        public IList<Node> Args { get; set; }
-    }
-
-    public class NamedArgument : Node
-    {
-        public string Name { get; set; }
-        public Node Value { get; set; }
-    }
-
-    public class Message // ?: Node
-    {
-        public IDictionary<string, Node> Attributes { get; set; }
-        public Node Value { get; set; }
-    }
-}
 
 namespace Fluent.Net
 {
@@ -187,12 +100,10 @@ namespace Fluent.Net
             };
         }
 
-        /**
-        * Parse the source string from the current index as an FTL entry
-        * and add it to object's entries property.
-        *
-        * @private
-        */
+        /// <summary>
+        /// Parse the source string from the current index as an FTL entry
+        /// and add it to object's entries property.
+        /// </summary>
         void GetEntry()
         {
             // The index here should either be at the beginning of the file
@@ -247,12 +158,10 @@ namespace Fluent.Net
             Next();
         }
 
-        /**
-        * Parse the source string from the current index as an FTL message
-        * and add it to the entries property on the Parser.
-        *
-        * @private
-        */
+        /// <summary>
+        /// Parse the source string from the current index as an FTL message
+        /// and add it to the entries property on the Parser.
+        /// </summary>
         void GetMessage()
         {
             var id = GetEntryIdentifier();
@@ -296,11 +205,9 @@ namespace Fluent.Net
             };
         }
 
-        /**
-        * Skip whitespace.
-        *
-        * @private
-        */
+        /// <summary>
+        /// Skip whitespace.
+        /// </summary>
         void SkipWs()
         {
             while (Current == ' ' || Current == '\n' ||
@@ -332,12 +239,10 @@ namespace Fluent.Net
 
             return name.ToString();
         }
-        /**
-        * Get identifier of a Message or a Term (staring with a dash).
-        *
-        * @returns {String}
-        * @private
-        */
+
+        /// <summary>
+        /// Get identifier of a Message or a Term (staring with a dash).
+        /// </summary>
         string GetEntryIdentifier()
         {
             return GetIdentifier(true);
@@ -359,12 +264,9 @@ namespace Fluent.Net
                 c == '-' || c == '_';
         }
 
-        /**
-        * Get Variant name.
-        *
-        * @returns {Object}
-        * @private
-        */
+        /// <summary>
+        /// Get Variant name.
+        /// </summary>
         Node GetVariantName()
         {
             if (!IsVariantLeader(Current) && Current != ' ')
@@ -406,12 +308,9 @@ namespace Fluent.Net
             return new VariantName { Name = name.ToString() };
         }
 
-        /**
-        * Get simple string argument enclosed in `'`.
-        *
-        * @returns {String}
-        * @private
-        */
+        /// <summary>
+        /// Get simple string argument enclosed in `'`.
+        /// </summary>
         Node GetString()
         {
             Next(); // "
@@ -435,14 +334,11 @@ namespace Fluent.Net
             return new StringExpression() { Value = result.ToString() };
         }
 
-        /**
-        * Parses a Message pattern.
-        * Message Pattern may be a simple string or an array of strings
-        * and placeable expressions.
-        *
-        * @returns {String|Array}
-        * @private
-        */
+        /// <summary>
+        /// Parses a Message pattern.
+        /// Message Pattern may be a simple string or an array of strings
+        /// and placeable expressions.
+        /// </summary>
         Node GetPattern()
         {
             // We're going to first try to see if the pattern is simple.
@@ -502,15 +398,12 @@ namespace Fluent.Net
             return GetComplexPattern();
         }
 
-        /**
-        * Parses a complex Message pattern.
-        * This function is called by GetPattern when the message is multiline,
-        * or contains escape chars or placeables.
-        * It does full parsing of complex patterns.
-        *
-        * @returns {Array}
-        * @private
-        */
+        /// <summary>
+        /// Parses a complex Message pattern.
+        /// This function is called by GetPattern when the message is multiline,
+        /// or contains escape chars or placeables.
+        /// It does full parsing of complex patterns.
+        /// </summary>
         Node GetComplexPattern()
         {
             var buffer = new StringBuilder();
@@ -610,13 +503,10 @@ namespace Fluent.Net
             return new Pattern() { Elements = content };
         }
 
-        /**
-        * Parses a single placeable in a Message pattern and returns its
-        * expression.
-        *
-        * @returns {Object}
-        * @private
-        */
+        /// <summary>
+        /// Parses a single placeable in a Message pattern and returns its
+        /// expression.
+        /// </summary>
         Node GetPlaceable()
         {
             Next();
@@ -702,12 +592,9 @@ namespace Fluent.Net
             };
         }
 
-        /**
-        * Parses a selector expression.
-        *
-        * @returns {Object}
-        * @private
-        */
+        /// <summary>
+        /// Parses a selector expression.
+        /// </summary>
         Node GetSelectorExpression()
         {
             Node literal = GetLiteral();
@@ -754,12 +641,9 @@ namespace Fluent.Net
             return literal;
         }
 
-        /**
-        * Parses call arguments for a CallExpression.
-        *
-        * @returns {Array}
-        * @private
-        */
+        /// <summary>
+        /// Parses call arguments for a CallExpression.
+        /// </summary>
         List<Node> GetCallArgs()
         {
             var args = new List<Node>();
@@ -891,12 +775,9 @@ namespace Fluent.Net
             return new NumberExpression() { Value = num.ToString() };
         }
 
-        /**
-        * Parses a list of Message attributes.
-        *
-        * @returns {Object}
-        * @private
-        */
+        /// <summary>
+        /// Parses a list of Message attributes.
+        /// </summary>
         IDictionary<string, Node> GetAttributes()
         {
             var attrs = new Dictionary<string, Node>();
@@ -942,12 +823,9 @@ namespace Fluent.Net
             return attrs;
         }
 
-        /**
-        * Parses a list of Selector variants.
-        *
-        * @returns {Array}
-        * @private
-        */
+        /// <summary>
+        /// Parses a list of Selector variants.
+        /// </summary>
         VariantResult GetVariants()
         {
             var result = new VariantResult()
@@ -993,12 +871,9 @@ namespace Fluent.Net
             return result;
         }
 
-        /**
-        * Parses a Variant key.
-        *
-        * @returns {String}
-        * @private
-        */
+        /// <summary>
+        /// Parses a Variant key.
+        /// </summary>
         Node GetVariantKey()
         {
             // VariantKey may be a Keyword or Number

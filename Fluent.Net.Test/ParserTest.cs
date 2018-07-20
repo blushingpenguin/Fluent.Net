@@ -72,23 +72,23 @@ namespace Fluent.Net.Test
             using (var sr = new StringReader(testData.Ftl))
             {
                 var resource = new Parser().Parse(sr);
-
-                bool resultsEqual = JToken.DeepEquals(resource.ToJson(), testData.Expected);
+                var resourceJson = AstToJson.ToJson(resource);
+                bool resultsEqual = JToken.DeepEquals(resourceJson, testData.Expected);
                 if (!resultsEqual)
                 {
                     Console.WriteLine("parsed =");
-                    Console.WriteLine(resource.ToJson());
+                    Console.WriteLine(resourceJson);
                     Console.WriteLine("expected =");
                     Console.WriteLine(testData.Expected);
                     var jdp = new JsonDiffPatch();
-                    var diff = jdp.Diff(resource.ToJson(), testData.Expected);
+                    var diff = jdp.Diff(resourceJson, testData.Expected);
                     Console.WriteLine("diff =");
                     Console.WriteLine(diff);
                 }
                 resultsEqual.Should().BeTrue();
 
                 // doesn't seem to work -- just returns true
-                // resource.ToJson().Should().BeEquivalentTo(testData.Expected,
+                // resourceJson.Should().BeEquivalentTo(testData.Expected,
                 //    options => options.AllowingInfiniteRecursion().RespectingRuntimeTypes());
             }
         }
