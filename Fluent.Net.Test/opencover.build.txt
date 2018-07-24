@@ -1,0 +1,20 @@
+<PropertyGroup>
+      <NuGetPackageDir>$(UserProfile)\.nuget\packages\</NuGetPackageDir>
+      <OpenCover>$(NuGetPackageDir)OpenCover\4.6.519\tools\OpenCover.Console.exe</OpenCover>
+      <XUnitConsolePath>$(NuGetPackageDir)xunit.runner.console\2.2.0-beta2-build3300\tools\xunit.console.exe</XUnitConsolePath>
+      <CoverageConverter>$(NuGetPackageDir)OpenCoverToCoberturaConverter\0.2.4\tools\OpenCoverToCoberturaConverter.exe</CoverageConverter>
+</PropertyGroup>
+
+<Target Name="Test">
+        <MakeDir Directories="$(TestResultsPath)" Condition = "!Exists('$(TestResultsPath)')" />
+        <ItemGroup>
+            <TestProjects Include="$(SolutionDir)\test\**\project.json" />
+        </ItemGroup>
+        <Exec Command='$(OpenCover) -oldstyle -mergeoutput "-target:C:\Program Files\dotnet\dotnet.exe" -targetargs:"test %(TestProjects.Identity) -xml %(TestProjects.RelativeDir)Test-Results.xml" -register:user -filter:"+[MyCompany.*]* -[*Tests*]*" -output:$(SolutionDir)Test-Coverage.xml' />
+    </Target>
+    <Target Name="ConvertCoverageFormat">
+        <PropertyGroup>
+            <OpenCoverOutput>"$(SolutionDir)\Test-Coverage.xml"</OpenCoverOutput>
+        </PropertyGroup>
+        <Exec Command='$(CoverageConverter) -input:"$(OpenCoverOutput)" -output:"$(SolutionDir)Cobertura-Coverage.xml" -sources:$(SolutionDir)' />
+    </Target>

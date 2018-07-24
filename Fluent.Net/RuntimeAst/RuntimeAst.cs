@@ -31,7 +31,7 @@ namespace Fluent.Net.RuntimeAst
         public string Name { get; set; }
     }
 
-    public class Variant
+    public class Variant : Node
     {
         public Node Key { get; set; }
         public Node Value { get; set; }
@@ -39,7 +39,7 @@ namespace Fluent.Net.RuntimeAst
 
     public class VariantExpression : Node
     {
-        public Node Id { get; set; }
+        public MessageReference Id { get; set; }
         public Node Key { get; set; }
     }
 
@@ -63,7 +63,7 @@ namespace Fluent.Net.RuntimeAst
 
     public class CallExpression : Node
     {
-        public Node Function { get; set; }
+        public string Function { get; set; }
         public IList<Node> Args { get; set; }
     }
 
@@ -73,7 +73,7 @@ namespace Fluent.Net.RuntimeAst
         public Node Value { get; set; }
     }
 
-    public class Message // ?: Node
+    public class Message : Node
     {
         public IDictionary<string, Node> Attributes { get; set; }
         public Node Value { get; set; }

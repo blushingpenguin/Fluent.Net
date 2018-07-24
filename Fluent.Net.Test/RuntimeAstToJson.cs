@@ -119,7 +119,7 @@ namespace Fluent.Net.Test
             return new JObject
             {
                 { "type", "call" },
-                { "fun", ToJson(call.Function) },
+                { "fun", call.Function },
                 { "args", ToJson(call.Args) }
             };
         }

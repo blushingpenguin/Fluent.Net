@@ -621,7 +621,7 @@ namespace Fluent.Net
                 Next();
                 var key = GetVariantKey();
                 Next();
-                return new VariantExpression() { Id = literal, Key = key };
+                return new VariantExpression() { Id = messageReference, Key = key };
             }
 
             if (Current == '(')
@@ -635,7 +635,7 @@ namespace Fluent.Net
                 }
 
                 Next();
-                return new CallExpression() { Function = literal, Args = args };
+                return new CallExpression() { Function = messageReference.Name, Args = args };
             }
 
             return literal;
