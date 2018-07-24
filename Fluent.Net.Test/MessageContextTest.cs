@@ -4,25 +4,14 @@ using System.Collections.Generic;
 
 namespace Fluent.Net.Test
 {
-    public class MessageContextTest
+    public class MessageContextTest : MessageContextTestBase
     {
-        static string Ftl(string input) => Util.Ftl(input);
-
-        private MessageContext CreateContext(string ftl)
-        {
-            var ctx = new MessageContext("en-US", new MessageContextOptions()
-                { UseIsolating =  false });
-            var errors = ctx.AddMessages(ftl);
-            errors.Should().BeEquivalentTo(new List<ParseException>());
-            return ctx;
-        }
-
         private MessageContext CreateAddMessagesContext()
         {
-            return CreateContext(Ftl(@"
+            return CreateContext(@"
                 foo = Foo
                 -bar = Private Bar
-            "));
+            ");
         }
 
         [Test]
@@ -88,10 +77,10 @@ namespace Fluent.Net.Test
 
         private MessageContext CreateHasMessageContext()
         {
-            return CreateContext(Ftl(@"
+            return CreateContext(@"
                 foo = Foo
                 -bar = Bar
-            "));
+            ");
         }
 
 

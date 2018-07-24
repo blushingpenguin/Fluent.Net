@@ -5,7 +5,7 @@ using System.IO;
 
 namespace Fluent.Net.Test
 {
-    public class SerializerExpressionTest : SerializerTestBase
+    public class SerializerExpressionTest : FtlTestBase
     {
         static string Pretty(string text)
         {

@@ -23,7 +23,7 @@ namespace Fluent.Net.RuntimeAst
 
     public class Pattern : Node
     {
-        public IEnumerable<Node> Elements { get; set; }
+        public ICollection<Node> Elements { get; set; }
     }
 
     public class VariantName : Node

@@ -5,7 +5,7 @@ using System.IO;
 
 namespace Fluent.Net.Test
 {
-    public class SerializerPaddingTest : SerializerTestBase
+    public class SerializerPaddingTest : FtlTestBase
     {
         void SerializeTwice(string input, string output = null)
         {

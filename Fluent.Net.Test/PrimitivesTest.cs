@@ -4,30 +4,17 @@ using System.Collections.Generic;
 
 namespace Fluent.Net.Test
 {
-    public class PrimitivesTest
+    public class PrimitivesTest : MessageContextTestBase
     {
-        static string Ftl(string input) => Util.Ftl(input);
-
-        MessageContext 
-        CreateContext(string ftl)
-        {
-            var locales = new string[] { "en-US", "en" };
-            var ctx = new MessageContext(locales, new MessageContextOptions()
-                { UseIsolating = false });
-            var errors = ctx.AddMessages(ftl);
-            errors.Should().BeEquivalentTo(new List<ParseException>());
-            return ctx;
-        }
-
         MessageContext CreateNumbersContext()
         {
-            return CreateContext(Ftl(@"
+            return CreateContext(@"
                 one     = { 1 }
                 select  = { 1 ->
                    *[0] Zero
                     [1] One
                 }
-            "));
+            ");
         }
 
         [Test]
@@ -54,7 +41,7 @@ namespace Fluent.Net.Test
 
         MessageContext CreateStringValueContext()
         {
-            return CreateContext(Ftl(@"
+            return CreateContext(@"
                 foo               = Foo
 
                 placeable-literal = { ""Foo"" } Bar
@@ -75,7 +62,7 @@ namespace Fluent.Net.Test
                 selector-attr    = { -baz.attr ->
                    *[Baz Attribute] Member 3
                 }
-            "));
+            ");
         }
 
         [Test]
@@ -165,7 +152,7 @@ namespace Fluent.Net.Test
 
         MessageContext CreateComplexStringContext()
         {
-            return CreateContext(Ftl(@"
+            return CreateContext(@"
                 foo               = Foo
                 bar               = { foo } Bar
 
@@ -183,7 +170,7 @@ namespace Fluent.Net.Test
                     [Foo Bar Baz Attribute] Variant
                    *[ok] Valid
                 }
-            "));
+            ");
         }
 
         [Test]

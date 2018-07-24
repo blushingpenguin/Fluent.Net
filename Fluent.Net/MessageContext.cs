@@ -216,15 +216,16 @@ namespace Fluent.Net
     public class FluentDateTime : FluentType
     {
         DateTime _dateValue;
-        FluentDateTime(string value) :
-            base(value)
+
+        public FluentDateTime(DateTime value) :
+            base(value.ToString("o"))
         {
-            _dateValue = DateTime.Parse(value);
+            _dateValue = value;
         }
 
         public override string Format(MessageContext ctx)
         {
-            // TODO: match js number formattiing here
+            // TODO: match js number formattiig here?
             // System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo(
             return String.Format(ctx.Culture, "{0}", _dateValue);
         }
@@ -593,15 +594,19 @@ namespace Fluent.Net
             }
 
             // Convert the argument to a Fluent type.
-            if (arg is string)
+            if (arg is string str)
             {
-                return new FluentString((string)arg);
+                return new FluentString(str);
             }
             if (arg is sbyte || arg is short || arg is int || arg is long ||
                 arg is byte || arg is ushort || arg is uint || arg is ulong ||
                 arg is float || arg is double || arg is decimal)
             {
                 return new FluentNumber(arg.ToString());
+            }
+            if (arg is DateTime dt)
+            {
+                return new FluentDateTime(dt);
             }
 
             env.Errors.Add(new TypeError(
@@ -685,7 +690,7 @@ namespace Fluent.Net
             // Wrap interpolations with Directional Isolate Formatting characters
             // only when the pattern has more than one element.
             var useIsolating = env.Context.UseIsolating &&
-                pattern.Elements.Any();
+                pattern.Elements.Count > 1;
 
             foreach (var elem in pattern.Elements)
             {

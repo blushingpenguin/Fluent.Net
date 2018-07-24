@@ -5,24 +5,6 @@ using System.Text;
 
 namespace Fluent.Net
 {
-    struct RuntimeResult
-    {
-        public IEnumerable<string> Patterns;
-        public string String;
-
-        public RuntimeResult(IEnumerable<string> patterns)
-        {
-            Patterns = patterns;
-            String = null;
-        }
-
-        public RuntimeResult(string string_)
-        {
-            Patterns = null;
-            String = string_;
-        }
-    }
-
     struct VariantResult
     {
         public IList<Variant> Variants;

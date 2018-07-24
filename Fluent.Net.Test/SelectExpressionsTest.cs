@@ -4,30 +4,17 @@ using System.Collections.Generic;
 
 namespace Fluent.Net.Test
 {
-    public class SelectExpressionsTest
+    public class SelectExpressionsTest : MessageContextTestBase
     {
-        static string Ftl(string input) => Util.Ftl(input);
-
-        private MessageContext CreateContext(string ftl)
-        {
-            var locales = new string[] { "en-US", "en" };
-            var ctx = new MessageContext(locales, new MessageContextOptions()
-                { UseIsolating = false });
-            var errors = ctx.AddMessages(ftl);
-            errors.Should().BeEquivalentTo(new List<ParseException>());
-            return ctx;
-        }
-
-
         [Test]
         public void SelectsTheVariantMatchingTheSelector()
         {
-            var ctx = CreateContext(Ftl(@"
+            var ctx = CreateContext(@"
                 foo = { ""a"" ->
                     [a] A
                    *[b] B
                 }
-            "));
+            ");
             var msg = ctx.GetMessage("foo");
             var errors = new List<FluentError>();
             var val = ctx.Format(msg, null, errors);
@@ -38,12 +25,12 @@ namespace Fluent.Net.Test
         [Test]
         public void SelectsTheDefaultVariantWhenNotMatchingTheSelector()
         {
-            var ctx = CreateContext(Ftl(@"
+            var ctx = CreateContext(@"
                 foo = { ""c"" ->
                    *[a] A
                     [b] B
                 }
-            "));
+            ");
 
             var msg = ctx.GetMessage("foo");
             var errors = new List<FluentError>();
@@ -55,12 +42,12 @@ namespace Fluent.Net.Test
         [Test]
         public void MissingSelectorsSelectsTheDefaultVariantWithError()
         {
-            var ctx = CreateContext(Ftl(@"
+            var ctx = CreateContext(@"
                 foo = { $none ->
                    *[a] A
                     [b] B
                 }
-            "));
+            ");
             var msg = ctx.GetMessage("foo");
             var errors = new List<FluentError>();
             var val = ctx.Format(msg, null, errors);
@@ -71,7 +58,7 @@ namespace Fluent.Net.Test
 
         MessageContext CreateNumericSelectorContext()
         {
-            return CreateContext(Ftl(@"
+            return CreateContext(@"
                 foo = { 1 ->
                    *[0] A
                     [1] B
@@ -81,7 +68,7 @@ namespace Fluent.Net.Test
                    *[0] A
                     [1] B
                 }
-            "));
+            ");
         }
 
         [Test]
@@ -108,7 +95,7 @@ namespace Fluent.Net.Test
 
         MessageContext CreateNumericAndPluralSelectorContext()
         {
-            return CreateContext(Ftl(@"
+            return CreateContext(@"
                 foo = { 1 ->
                    *[one] A
                     [other] B
@@ -118,7 +105,7 @@ namespace Fluent.Net.Test
                    *[1] A
                     [other] B
                 }
-            "));
+            ");
         }
 
         [Test]
