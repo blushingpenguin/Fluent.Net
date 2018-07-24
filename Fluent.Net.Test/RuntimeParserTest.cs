@@ -1,7 +1,5 @@
 ﻿using FluentAssertions;
 using JsonDiffPatchDotNet;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using System;

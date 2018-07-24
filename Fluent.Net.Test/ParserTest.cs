@@ -1,14 +1,11 @@
 ﻿using FluentAssertions;
 using JsonDiffPatchDotNet;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace Fluent.Net.Test
 {

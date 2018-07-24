@@ -1,9 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Fluent.Net.RuntimeAst;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Fluent.Net.RuntimeAst;
 
 namespace Fluent.Net.Test
 {

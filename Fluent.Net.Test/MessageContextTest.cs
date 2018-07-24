@@ -1,14 +1,6 @@
 ﻿using FluentAssertions;
-using JsonDiffPatchDotNet;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using System;
-using System.IO;
-using System.Linq;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace Fluent.Net.Test
 {
@@ -20,7 +12,8 @@ namespace Fluent.Net.Test
         {
             var ctx = new MessageContext("en-US", new MessageContextOptions()
                 { UseIsolating =  false });
-            ctx.AddMessages(ftl);
+            var errors = ctx.AddMessages(ftl);
+            errors.Should().BeEquivalentTo(new List<ParseException>());
             return ctx;
         }
 
@@ -87,7 +80,6 @@ namespace Fluent.Net.Test
             ctx._messages.Count.Should().Be(1);
 
             var msg = ctx.GetMessage("foo");
-            errors = new List<string>();
             var formatErrors = new List<FluentError>();
             var val = ctx.Format(msg, null, formatErrors);
             val.Should().Be("Foo");

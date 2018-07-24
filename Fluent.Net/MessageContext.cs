@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Fluent.Net.RuntimeAst;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Fluent.Net.RuntimeAst;
 
 namespace Fluent.Net
 {
@@ -66,7 +66,7 @@ namespace Fluent.Net
         {
         }
     }
-    
+
     class ReferenceError : FluentError
     {
         public ReferenceError(string message) :
@@ -75,6 +75,13 @@ namespace Fluent.Net
         }
     }
 
+    class OverrideError : ParseException
+    {
+        public OverrideError(string message) :
+            base(message)
+        {
+        }
+    }
 
     public interface IFluentType
     {
@@ -265,15 +272,9 @@ namespace Fluent.Net
             {
                 return Value == fstr.Value;
             }
-            else if (other is FluentNumber)
+            else if (other is FluentNumber fnum)
             {
-                // AH??
-                // const pr = ctx._memoizeIntlObject(
-                //   Intl.PluralRules, other.opts
-                // );
-                // return this.value === pr.select(other.value);
-                // ctx.
-                // TODO: ctx?
+                return Value == Plural.LocaleRules.Select(ctx.Locales, fnum.Value);
             }
             return false;
         }
@@ -771,7 +772,7 @@ namespace Fluent.Net
     {
         readonly static IDictionary<string, Resolver.ExternalFunction> s_emptyFunctions = new
             Dictionary<string, Resolver.ExternalFunction>();
-        string[] _locales;
+        public IEnumerable<string> Locales { get; private set; }
         internal IDictionary<string, Message> _messages = new Dictionary<string, Message>();
         internal IDictionary<string, Message> _terms = new Dictionary<string, Message>();
         public Func<string, string> Transform { get; private set; }
@@ -818,8 +819,8 @@ namespace Fluent.Net
             MessageContextOptions   options = null
         )
         {
-            _locales = locales.ToArray();
-            Culture = new CultureInfo(_locales.First());
+            Locales = locales;
+            Culture = new CultureInfo(Locales.First());
             if (options != null)
             {
                 UseIsolating = options.UseIsolating;
@@ -894,9 +895,8 @@ namespace Fluent.Net
         /// @param   {string} source - Text resource with translations.
         /// @returns {Array<Error>}
         /// 
-        public IList<string> AddMessages(TextReader source)
+        public IList<ParseException> AddMessages(TextReader source)
         {
-            var errors = new List<string>();
             var parser = new RuntimeParser();
             var resource = parser.GetResource(source);
             foreach (var entry in resource.Entries)
@@ -932,7 +932,8 @@ namespace Fluent.Net
                 {
                     if (_terms.ContainsKey(entry.Key))
                     {
-                        errors.Add($"Attempt to override an existing term: \"{entry.Key}\"");
+                        resource.Errors.Add(new OverrideError(
+                            $"Attempt to override an existing term: \"{entry.Key}\""));
                         continue;
                     }
                     _terms.Add(entry);
@@ -941,16 +942,17 @@ namespace Fluent.Net
                 {
                     if (_messages.ContainsKey(entry.Key))
                     {
-                        errors.Add($"Attempt to override an existing message: \"{entry.Key}\"");
+                        resource.Errors.Add(new OverrideError(
+                            $"Attempt to override an existing message: \"{entry.Key}\""));
                         continue;
                     }
                     _messages.Add(entry);
                 }
             }
-            return errors;
+            return resource.Errors;
         }
 
-        public IList<string> AddMessages(string source)
+        public IList<ParseException> AddMessages(string source)
         {
             using (var sr = new StringReader(source))
             {
@@ -989,7 +991,7 @@ namespace Fluent.Net
         /// @returns {?string}
         /// 
         public string Format(
-            Message message, 
+            Node message, 
             IDictionary<string, object> args = null, 
             ICollection<FluentError> errors = null
         )
