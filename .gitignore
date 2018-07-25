@@ -268,3 +268,4 @@ __pycache__/
 
 # downloaded build tools
 Build/tools/
+tools/

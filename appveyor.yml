@@ -1,0 +1,21 @@
+version: 1.0.{build}
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+  package_version: '{version}'
+  assembly_version: '{version}'
+  file_version: '{version}'
+  informational_version: '{version}'
+environment:
+  COVERALLS_REPO_TOKEN:
+    secure: oC0OUIZSVY7kLUnkWIw33aVZrTkJIeNhFGM/fy2WYvFgdG+GeajLvF+UeGHYXEfF
+build_script:
+  - dotnet build -c Release /p:DebugType=Full
+test_script:
+- ps: >-
+    nuget install OpenCover -OutputDirectory packages -Version 4.6.519
+    dotnet tool install coveralls.net --version 1.0.0 --tool-path tools
+    ".\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe" -target:"dotnet.exe" -targetargs:"test \"Fluent.Net.Test/Fluent.Net.Test.csproj\" --configuration Release --no-build" -filter:"+[*]* -[*.Test*]* -[nunit*]* -[EfCore.InMemoryHelpers]*" -excludebyattribute:"System.CodeDom.Compiler.GeneratedCodeAttribute" -skipautoprops -oldStyle -mergeoutput -register:user -output:"OpenCover.xml"
+    $coveralls = ".\tools\csmacnz.coveralls.exe"
+    & $coveralls --opencover -i OpenCover.xml --repoToken $env:COVERALLS_REPO_TOKEN --commitId $env:APPVEYOR_REPO_COMMIT --commitBranch $env:APPVEYOR_REPO_BRANCH --commitAuthor $env:APPVEYOR_REPO_COMMIT_AUTHOR --commitEmail $env:APPVEYOR_REPO_COMMIT_AUTHOR_EMAIL --commitMessage $env:APPVEYOR_REPO_COMMIT_MESSAGE --jobId $env:APPVEYOR_JOB_ID
