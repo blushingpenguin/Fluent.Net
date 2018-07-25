@@ -8,6 +8,7 @@ nuget install -Verbosity quiet -OutputDirectory packages -Version 3.1.2 ReportGe
 echo Building Release with symbols
 dotnet build -c Release /p:DebugType=Full
 
+if exist coverage\OpenCover.xml del /q coverage\OpenCover.xml
 if not exist coverage mkdir coverage
 
 echo Running OpenCover
