@@ -1,6 +1,9 @@
 Fluent.Net
 ==========
 
+[![ci.appveyor.com](https://ci.appveyor.com/api/projects/status/github/blushingpenguin/Fluent.Net?branch=master&svg=true)](https://ci.appveyor.com/api/projects/status/github/blushingpenguin/Fluent.Net?branch=master&svg=true)
+[![codecov.io](https://codecov.io/gh/blushingpenguin/Fluent.Net/coverage.svg?branch=master)](https://codecov.io/gh/blushingpenguin/Fluent.Net?branch=master)
+
 Fluent.Net is a C# implementation of Project Fluent, a localization
 framework designed to unleash the expressive power of the natural language.
 
