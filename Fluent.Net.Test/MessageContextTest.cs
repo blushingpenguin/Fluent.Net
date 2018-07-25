@@ -285,5 +285,32 @@ namespace Fluent.Net.Test
             other.Match(us, num2).Should().BeTrue();
             other.Match(us, num0_6).Should().BeTrue();
         }
+
+        [Test]
+        public void VariantTest()
+        {
+            var context = CreateContext(@"
+                -brand-name =
+                    {
+                       *[nominative] Firefox
+                        [accusative] Firefoxa
+                    }
+                    .gender = masculine
+
+                update-command =
+                    Zaktualizuj { -brand-name[accusative] }.
+
+                update-successful =
+                    { -brand-name.gender ->
+                        [masculine] { -brand-name } został pomyślnie zaktualizowany.
+                        [feminine] { -brand-name } została pomyślnie zaktualizowana.
+                       *[other] Program { -brand-name } został pomyślnie zaktualizowany.
+                    }
+            ");
+            var errors = new List<FluentError>();
+            var result = context.Format(context.GetMessage("update-successful"), null, errors);
+            result.Should().Be("Firefox został pomyślnie zaktualizowany.");
+            errors.Count.Should().Be(0);
+        }
     }
 }
