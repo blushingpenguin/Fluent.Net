@@ -65,9 +65,9 @@ Local Development
 
 Hacking on `Fluent.Net` is easy! To quickly get started clone the repo:
 
-    $ git clone https://github.com/mdw211/Fluent.Net.git
+    $ git clone https://github.com/blushingpenguin/Fluent.Net.git
     $ cd Fluent.Net
 
 To compile the code and run the tests just open the solution in 
 Visual Studio 2017 Community Edition.  To generate a code coverage report
-then run cover.bat from the Build subdirectory.
+then run cover.bat from the solution directory.

@@ -2,6 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Mark Weaver</Authors>
+    <Company>Blushing Penguin Coding Club</Company>
+    <Description>Fluent.Net is a C# implementation of Project Fluent, a localization framework designed to unleash the expressive power of the natural language.
+
+Project Fluent keeps simple things simple and makes complex things possible. The syntax used for describing translations is easy to read and understand. At the same time it allows, when necessary, to represent complex concepts from natural languages like gender, plurals, conjugations, and others.</Description>
+    <Copyright>Copyright (c) 2018 Mark Weaver</Copyright>
+    <PackageLicenseUrl>https://github.com/blushingpenguin/Fluent.Net/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/blushingpenguin/Fluent.Net/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/blushingpenguin/Fluent.Net/</RepositoryUrl>
+    <RepositoryType>github</RepositoryType>
+    <PackageTags>fluent, i18n, internationalization, l10n, l20n, globalization, translation</PackageTags>
+    <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

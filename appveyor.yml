@@ -11,6 +11,8 @@ dotnet_csproj:
 environment:
   CODECOV_REPO_TOKEN:
     secure: oC0OUIZSVY7kLUnkWIw33aVZrTkJIeNhFGM/fy2WYvFgdG+GeajLvF+UeGHYXEfF
+build:
+  publish_nuget: true
 build_script:
   - dotnet build -c Release /p:DebugType=Full
 test_script:
@@ -21,3 +23,9 @@ after_test:
     $env:PATH = 'C:\msys64\usr\bin;' + $env:PATH
     Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
     bash codecov.sh -f "OpenCover.xml" -t $env:CODECOV_REPO_TOKEN
+deploy:
+  provider: NuGet
+  api_key:
+    secure: DxwQw28SL4QKwpC+sE/Cot9yJinIAfVeXy9PYzohMO+qAf/gvi6I+zZjj24Pj3mp
+  skip_symbols: false
+  artifact: /.*\.nupkg/
