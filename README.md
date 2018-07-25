@@ -1,8 +1,8 @@
-Fluent.Net
-==========
-
 [![ci.appveyor.com](https://ci.appveyor.com/api/projects/status/github/blushingpenguin/Fluent.Net?branch=master&svg=true)](https://ci.appveyor.com/api/projects/status/github/blushingpenguin/Fluent.Net?branch=master&svg=true)
 [![codecov.io](https://codecov.io/gh/blushingpenguin/Fluent.Net/coverage.svg?branch=master)](https://codecov.io/gh/blushingpenguin/Fluent.Net?branch=master)
+
+Fluent.Net
+==========
 
 Fluent.Net is a C# implementation of Project Fluent, a localization
 framework designed to unleash the expressive power of the natural language.
@@ -16,8 +16,19 @@ natural languages like gender, plurals, conjugations, and others.
 Packages
 --------
 
-Fluent.Net can also be installed from nuget.org.
-TODO: figure out how to automate build/upload to nuget.org
+Fluent.Net can also be installed from [nuget.org](https://www.nuget.org/packages/Fluent.Net/).
+
+Install with package manager:
+
+    Install-Package Fluent.Net
+
+or with nuget:
+
+    nuget install Fluent.Net
+
+Or with dotnet:
+
+    dotnet add package Fluent.Net
 
 
 Learn the FTL syntax
@@ -70,4 +81,4 @@ Hacking on `Fluent.Net` is easy! To quickly get started clone the repo:
 
 To compile the code and run the tests just open the solution in 
 Visual Studio 2017 Community Edition.  To generate a code coverage report
-then run cover.bat from the solution directory.
+run cover.bat from the solution directory.
