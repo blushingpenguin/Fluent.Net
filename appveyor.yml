@@ -8,11 +8,11 @@ dotnet_csproj:
   assembly_version: '{version}'
   file_version: '{version}'
   informational_version: '{version}'
-before_build:
-- cmd: nuget restore
 environment:
   CODECOV_REPO_TOKEN:
     secure: oC0OUIZSVY7kLUnkWIw33aVZrTkJIeNhFGM/fy2WYvFgdG+GeajLvF+UeGHYXEfF
+configuration:
+  - Release
 build_script:
   - dotnet build -c Release /p:DebugType=Full
 test_script:
