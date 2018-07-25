@@ -14,6 +14,9 @@ Project Fluent keeps simple things simple and makes complex things possible. The
     <RepositoryType>github</RepositoryType>
     <PackageTags>fluent, i18n, internationalization, l10n, l20n, globalization, translation</PackageTags>
     <NeutralLanguage>en-US</NeutralLanguage>
+    <AssemblyVersion>1.0.0.10</AssemblyVersion>
+    <FileVersion>1.0.0.10</FileVersion>
+    <Version>1.0.10</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
