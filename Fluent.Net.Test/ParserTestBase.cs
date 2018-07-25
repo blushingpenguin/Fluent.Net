@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace Fluent.Net.Test
 {
-    public abstract class ParserTestBase
+    public abstract class ParserTestBase : FtlTestBase
     {
         public class BehaviourTestData
         {
