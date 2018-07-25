@@ -17,7 +17,7 @@ test_script:
   - nuget install OpenCover -OutputDirectory packages -Version 4.6.519
   - .\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -targetargs:"test Fluent.Net.Test\Fluent.Net.Test.csproj --configuration Release --no-build" -filter:"+[*]* -[*.Test*]* -[nunit*]* -[EfCore.InMemoryHelpers]*" -excludebyattribute:"System.CodeDom.Compiler.GeneratedCodeAttribute" -skipautoprops -oldStyle -mergeoutput -register:user -output:"OpenCover.xml"
 after_test:
-- ps:
+- ps: |
     $env:PATH = 'C:\msys64\usr\bin;' + $env:PATH
     Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
     bash codecov.sh -f "OpenCover.xml" -t $env:CODECOV_REPO_TOKEN
