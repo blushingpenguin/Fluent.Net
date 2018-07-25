@@ -308,9 +308,128 @@ namespace Fluent.Net.Test
                     }
             ");
             var errors = new List<FluentError>();
-            var result = context.Format(context.GetMessage("update-successful"), null, errors);
+            var msg = context.GetMessage("update-successful");
+            var result = context.Format(msg, null, errors);
             result.Should().Be("Firefox został pomyślnie zaktualizowany.");
             errors.Count.Should().Be(0);
+
+            msg = context.GetMessage("update-command");
+            result = context.Format(msg, null, errors);
+            result.Should().Be("Zaktualizuj Firefoxa.");
+            errors.Count.Should().Be(0);
+        }
+
+        [Test]
+        public void UnknownVariantReturnsDefaultAndError()
+        {
+            var context = CreateContext(@"
+                -term =
+                    {
+                        [a] A
+                        *[b] B
+                    }
+                missing-term =
+                    We should { -term[c] } select b and produce an error
+            ");
+            var errors = new List<FluentError>();
+            var expectedErrors = new List<FluentError>()
+            {
+                new ReferenceError("Unknown variant: c")
+            };
+            var msg = context.GetMessage("missing-term");
+            var result = context.Format(msg, null, errors);
+            result.Should().Be("We should B select b and produce an error");
+            errors.Should().BeEquivalentTo(expectedErrors);
+        }
+
+        [Test]
+        public void NumberFormatTest()
+        {
+            var context = CreateContext(@"
+                emails = You have { NUMBER($unreadEmails) } unread emails.
+            ");
+            var errors = new List<FluentError>();
+            var msg = context.GetMessage("emails");
+            var args = new Dictionary<string, object>()
+            {
+                { "unreadEmails", 42 }
+            };
+            var result = context.Format(msg, args, errors);
+            result.Should().Be("You have 42 unread emails.");
+            errors.Count.Should().Be(0);
+        }
+
+        [Test]
+        public void DateFormatTest()
+        {
+            var context = CreateContext(@"
+                last-notice =
+                    Last checked: { DATETIME($lastChecked) }.
+            ");
+            var errors = new List<FluentError>();
+            var msg = context.GetMessage("last-notice");
+            var args = new Dictionary<string, object>()
+            {
+                { "lastChecked", new DateTime(2018, 7, 25, 17, 18, 0) }
+            };
+            var result = context.Format(msg, args, errors);
+            result.Should().Be("Last checked: 7/25/2018 5:18:00 PM.");
+            errors.Count.Should().Be(0);
+        }
+
+        [Test]
+        public void FunctionThatDoesntExistReturnsAnError()
+        {
+            var context = CreateContext(@"
+                no-fun =
+                    I'm not having { NOFUN() }.
+            ");
+            var errors = new List<FluentError>();
+            var expectedErrors = new List<FluentError>()
+            {
+                new ReferenceError("Unknown function: NOFUN()")
+            };
+            var msg = context.GetMessage("no-fun");
+            var result = context.Format(msg, null, errors);
+            result.Should().Be("I'm not having NOFUN().");
+            errors.Should().BeEquivalentTo(expectedErrors,
+                opts => opts.RespectingRuntimeTypes());
+        }
+
+        [Test]
+        public void TermThatDoesntExistReturnsAnError()
+        {
+            var context = CreateContext(@"
+                no-term = { -term } that doesn't exist
+            ");
+            var errors = new List<FluentError>();
+            var expectedErrors = new List<FluentError>()
+            {
+                new ReferenceError("Unknown term: -term")
+            };
+            var msg = context.GetMessage("no-term");
+            var result = context.Format(msg, null, errors);
+            result.Should().Be("-term that doesn't exist");
+            errors.Should().BeEquivalentTo(expectedErrors,
+                opts => opts.RespectingRuntimeTypes());
+        }
+
+        [Test]
+        public void MessageThatDoesntExistReturnsAnError()
+        {
+            var context = CreateContext(@"
+                no-message = { message } that doesn't exist
+            ");
+            var errors = new List<FluentError>();
+            var expectedErrors = new List<FluentError>()
+            {
+                new ReferenceError("Unknown message: message")
+            };
+            var msg = context.GetMessage("no-message");
+            var result = context.Format(msg, null, errors);
+            result.Should().Be("message that doesn't exist");
+            errors.Should().BeEquivalentTo(expectedErrors,
+                opts => opts.RespectingRuntimeTypes());
         }
     }
 }

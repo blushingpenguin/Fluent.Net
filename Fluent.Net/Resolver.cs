@@ -151,7 +151,7 @@ namespace Fluent.Net
             {
                 var err = isTerm
                     ? new ReferenceError($"Unknown term: {ref_.Name}")
-                    : new ReferenceError($"Unknown message: ${ref_.Name}");
+                    : new ReferenceError($"Unknown message: {ref_.Name}");
                 env.Errors.Add(err);
                 return new FluentNone(ref_.Name);
             }
@@ -182,6 +182,17 @@ namespace Fluent.Net
             {
                 return message;
             }
+            if (message is Message actualMessage)
+            {
+                message = actualMessage.Value;
+                if (message is Pattern pattern)
+                {
+                    if (pattern.Elements.Any())
+                    {
+                        message = pattern.Elements.First();
+                    }
+                }
+            }
 
             var keyword = (IFluentType)ResolveNode(env, expr.Key);
 
@@ -191,7 +202,7 @@ namespace Fluent.Net
                 foreach (var variant in sexp.Variants)
                 {
                     var key = ResolveNode(env, variant.Key);
-                    if (keyword.Match(env.Context, keyword))
+                    if (keyword.Match(env.Context, key))
                     {
                         return variant.Value;
                     }
