@@ -36,10 +36,8 @@ namespace Fluent.Net
             {
                 PeekInlineWs();
 
-                if (CurrentPeekIs('\n') ||
-                    (CurrentPeekIs('\r') && Peek() == '\n'))
+                if (CurrentPeekIs('\r') || CurrentPeekIs('\n'))
                 {
-                    SkipToPeek();
                     Next();
                 }
                 else
@@ -58,8 +56,7 @@ namespace Fluent.Net
 
                 PeekInlineWs();
 
-                if (CurrentPeekIs('\n') ||
-                    (CurrentPeekIs('\r') && Peek() == '\n'))
+                if (CurrentPeekIs('\r') || CurrentPeekIs('\n'))
                 {
                     Peek();
                 }
@@ -96,7 +93,16 @@ namespace Fluent.Net
 
         public void ExpectNewLine()
         {
-            if (Current == '\n' || (Current == '\r' && Peek() == '\n'))
+            if (Current == '\r')
+            {
+                Next();
+                if (Current == '\n')
+                {
+                    Next();
+                }
+                return;
+            }
+            if (Current == '\n')
             {
                 Next();
                 return;
@@ -182,10 +188,10 @@ namespace Fluent.Net
         {
             if (CurrentPeekIs('\r'))
             {
+                int peekIndex = GetPeekIndex();
                 if (Peek() != '\n')
                 {
-                    ResetPeek();
-                    return false;
+                    ResetPeek(peekIndex);
                 }
                 return true;
             }
@@ -265,8 +271,7 @@ namespace Fluent.Net
 
             Peek();
             int ch = CurrentPeek;
-            if (ch == ' ' || ch == '\n' ||
-                (ch == '\r' && Peek() == '\n'))
+            if (ch == ' ' || ch == '\n' || ch == '\r')
             {
                 ResetPeek();
                 return true;

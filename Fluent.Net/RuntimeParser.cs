@@ -553,7 +553,7 @@ namespace Fluent.Net
 
             SkipInlineWs();
 
-            if (Current != '\n')
+            if (Current != '\r' && Current != '\n')
             {
                 Error("Variants should be listed in a new line");
             }

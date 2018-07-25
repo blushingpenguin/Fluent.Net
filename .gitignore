@@ -262,6 +262,7 @@ __pycache__/
 
 # Output
 .artifacts/
+coverage/
 
 # vscode settings
 .vscode/

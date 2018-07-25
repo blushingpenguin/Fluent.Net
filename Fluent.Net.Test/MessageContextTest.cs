@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 
 namespace Fluent.Net.Test
@@ -118,6 +119,171 @@ namespace Fluent.Net.Test
             ctx.GetMessage("-bar").Should().BeNull();
             ctx.GetMessage("-baz").Should().BeNull();
             ctx.GetMessage("-baz").Should().BeNull();
+        }
+
+        [Test]
+        public void TestRangeError()
+        {
+            var error = new RangeError("Test Message");
+            error.Message.Should().Be("Test Message");
+        }
+
+        [Test]
+        public void TestTypeError()
+        {
+            var error = new TypeError("Test Other Message");
+            error.Message.Should().Be("Test Other Message");
+        }
+
+        [Test]
+        public void TestReferenceError()
+        {
+            var error = new ReferenceError("Test Reference Message");
+            error.Message.Should().Be("Test Reference Message");
+        }
+
+        [Test]
+        public void TestOverrideError()
+        {
+            var error = new OverrideError("Test Override Message");
+            error.Message.Should().Be("Test Override Message");
+        }
+
+        [Test]
+        public void TestFluentNone()
+        {
+            var ctx = new MessageContext("en-US");
+            var none = new FluentNone("value");
+            none.Value.Should().Be("value");
+            none.Format(ctx).Should().Be("value");
+
+            var none2 = new FluentNone();
+            none2.Format(ctx).Should().Be("???");
+            none2.Value.Should().BeNull();
+
+            none.Match(ctx, none2).Should().BeTrue();
+            none.Match(ctx, "no").Should().BeFalse();
+        }
+
+        [Test]
+        public void TestFluentString()
+        {
+            var str = new FluentString("test string");
+            var ctx = new MessageContext("en-US");
+            str.Match(ctx, new FluentString("test string")).Should().BeTrue();
+            str.Match(ctx, "fifty").Should().BeFalse();
+            str.Match(ctx, "test string").Should().BeTrue();
+            str.Match(ctx, 45).Should().BeFalse();
+        }
+
+        [Test]
+        public void TestFluentNumber()
+        {
+            var num = new FluentNumber("105.6");
+            var ctx = new MessageContext("en-US");
+            num.Value.Should().Be("105.6");
+            num.Match(ctx, new FluentNumber("105.6")).Should().BeTrue();
+            num.Match(ctx, new FluentNumber("105.5")).Should().BeFalse();
+            num.Match(ctx, 105.6F).Should().BeTrue();
+            num.Match(ctx, 105.6).Should().BeTrue();
+            num.Match(ctx, 105.6M).Should().BeTrue();
+            num.Match(ctx, (sbyte)105).Should().BeFalse();
+            num.Match(ctx, (short)105).Should().BeFalse();
+            num.Match(ctx, (int)105).Should().BeFalse();
+            num.Match(ctx, (long)105).Should().BeFalse();
+            num.Match(ctx, (byte)105).Should().BeFalse();
+            num.Match(ctx, (ushort)105).Should().BeFalse();
+            num.Match(ctx, (uint)105).Should().BeFalse();
+            num.Match(ctx, (ulong)105).Should().BeFalse();
+            num.Match(ctx, "whatever").Should().BeFalse();
+            num.Format(ctx).Should().Be("105.6");
+        }
+
+        [Test]
+        public void TestFluentDateTime()
+        {
+            var dt = new FluentDateTime(new DateTime(2009, 01, 02));
+            var ctx = new MessageContext("en-US");
+            dt.Format(ctx).Should().Be("1/2/2009 12:00:00 AM");
+            dt.Match(ctx, new FluentDateTime(new DateTime(2009, 01, 02))).Should().BeTrue();
+            dt.Match(ctx, new FluentDateTime(new DateTime(2009, 01, 03))).Should().BeFalse();
+            dt.Match(ctx, new DateTime(2009, 01, 02)).Should().BeTrue();
+            dt.Match(ctx, new DateTime(2009, 01, 03)).Should().BeFalse();
+            dt.Match(ctx, "not really").Should().BeFalse();
+
+        }
+
+        [Test]
+        public void TestFluentSymbol()
+        {
+            var symbol = new FluentSymbol("sym");
+            var ctx = new MessageContext("en-US");
+            symbol.Format(ctx).Should().Be("sym");
+
+            symbol.Match(ctx, new FluentSymbol("sym")).Should().BeTrue();
+            symbol.Match(ctx, new FluentSymbol("notsym")).Should().BeFalse();
+            symbol.Match(ctx, "sym").Should().BeTrue();
+            symbol.Match(ctx, "notsym").Should().BeFalse();
+            symbol.Match(ctx, new FluentString("sym")).Should().BeTrue();
+            symbol.Match(ctx, new FluentString("notsym")).Should().BeFalse();
+            symbol.Match(ctx, 442).Should().BeFalse();
+        }
+
+        [Test]
+        public void TestFluentSymbolUsesLocaleRules()
+        {
+            var lt = new MessageContext("lt");
+            var us = new MessageContext(new string[] { "en-US", "en" });
+
+            var one = new FluentSymbol("one");
+            var few = new FluentSymbol("few");
+            var many = new FluentSymbol("many");
+            var other = new FluentSymbol("other");
+
+            var num1 = new FluentNumber("1");
+            var num11 = new FluentNumber("11");
+            var num2 = new FluentNumber("2");
+            var num0_6 = new FluentNumber("0.6");
+
+            one.Match(lt, num1).Should().BeTrue();
+            one.Match(lt, num11).Should().BeFalse();
+            one.Match(lt, num2).Should().BeFalse();
+            one.Match(lt, num0_6).Should().BeFalse();
+
+            one.Match(us, num1).Should().BeTrue();
+            one.Match(us, num11).Should().BeFalse();
+            one.Match(us, num2).Should().BeFalse();
+            one.Match(us, num0_6).Should().BeFalse();
+
+            few.Match(lt, num1).Should().BeFalse();
+            few.Match(lt, num11).Should().BeFalse();
+            few.Match(lt, num2).Should().BeTrue();
+            few.Match(lt, num0_6).Should().BeFalse();
+
+            few.Match(us, num1).Should().BeFalse();
+            few.Match(us, num11).Should().BeFalse();
+            few.Match(us, num2).Should().BeFalse();
+            few.Match(us, num0_6).Should().BeFalse();
+
+            many.Match(lt, num1).Should().BeFalse();
+            many.Match(lt, num11).Should().BeFalse();
+            many.Match(lt, num2).Should().BeFalse();
+            many.Match(lt, num0_6).Should().BeTrue();
+
+            many.Match(us, num1).Should().BeFalse();
+            many.Match(us, num11).Should().BeFalse();
+            many.Match(us, num2).Should().BeFalse();
+            many.Match(us, num0_6).Should().BeFalse();
+
+            other.Match(lt, num1).Should().BeFalse();
+            other.Match(lt, num11).Should().BeTrue();
+            other.Match(lt, num2).Should().BeFalse();
+            other.Match(lt, num0_6).Should().BeFalse();
+
+            other.Match(lt, num1).Should().BeFalse();
+            other.Match(us, num11).Should().BeTrue();
+            other.Match(us, num2).Should().BeTrue();
+            other.Match(us, num0_6).Should().BeTrue();
         }
     }
 }

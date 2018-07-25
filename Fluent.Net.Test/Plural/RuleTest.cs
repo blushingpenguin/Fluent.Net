@@ -12,6 +12,7 @@ namespace Fluent.Net.Test.Plural
         {
             var expr = new Expr() { Operand = Operand.n };
             expr.Evaluate("2134.432000").Should().Be(2134.432M);
+            expr.Evaluate("2134").Should().Be(2134M);
         }
 
         [Test]
@@ -19,6 +20,7 @@ namespace Fluent.Net.Test.Plural
         {
             var expr = new Expr() { Operand = Operand.i };
             expr.Evaluate("2134.432000").Should().Be(2134M);
+            expr.Evaluate("2134").Should().Be(2134M);
         }
 
         [Test]
@@ -26,6 +28,7 @@ namespace Fluent.Net.Test.Plural
         {
             var expr = new Expr() { Operand = Operand.v };
             expr.Evaluate("2134.432000").Should().Be(6M);
+            expr.Evaluate("2134").Should().Be(0M);
         }
 
         [Test]
@@ -33,6 +36,8 @@ namespace Fluent.Net.Test.Plural
         {
             var expr = new Expr() { Operand = Operand.w };
             expr.Evaluate("2134.432000").Should().Be(3M);
+            expr.Evaluate("2134").Should().Be(0M);
+            expr.Evaluate(".000").Should().Be(0M);
         }
 
         [Test]
@@ -40,6 +45,7 @@ namespace Fluent.Net.Test.Plural
         {
             var expr = new Expr() { Operand = Operand.f };
             expr.Evaluate("2134.432000").Should().Be(432000M);
+            expr.Evaluate("2134").Should().Be(0M);
         }
 
         [Test]
@@ -47,6 +53,7 @@ namespace Fluent.Net.Test.Plural
         {
             var expr = new Expr() { Operand = Operand.t };
             expr.Evaluate("2134.432000").Should().Be(432M);
+            expr.Evaluate("2134").Should().Be(0M);
         }
 
         [Test]

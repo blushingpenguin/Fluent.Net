@@ -1,52 +1,17 @@
-#!/bin/bash
+@echo off
 
-set -e
-
-# Install OpenCover and ReportGenerator, and save the path to their executables.
+rem Install OpenCover and ReportGenerator, and save the path to their executables.
+echo Installing packages
 nuget install -Verbosity quiet -OutputDirectory packages -Version 4.6.519 OpenCover
-nuget install -Verbosity quiet -OutputDirectory packages -Version 2.4.5.0 ReportGenerator
+nuget install -Verbosity quiet -OutputDirectory packages -Version 3.1.2 ReportGenerator
 
-OPENCOVER=$PWD/packages/OpenCover.4.6.519/tools/OpenCover.Console.exe
-REPORTGENERATOR=$PWD/packages/ReportGenerator.2.4.5.0/tools/ReportGenerator.exe
+echo Building Release with symbols
+dotnet build -c Release /p:DebugType=Full
 
-CONFIG=Release
-# Arguments to use for the build
-DOTNET_BUILD_ARGS="-c $CONFIG"
-# Arguments to use for the test
-DOTNET_TEST_ARGS="$DOTNET_BUILD_ARGS"
+if not exist coverage mkdir coverage
 
-echo CLI args: $DOTNET_BUILD_ARGS
+echo Running OpenCover
+"packages\OpenCover.4.6.519\tools\OpenCover.Console.exe" -target:"dotnet.exe" -targetargs:"test Fluent.Net.Test\Fluent.Net.Test.csproj --configuration Release --no-build" -filter:"+[*]* -[*.Test*]* -[nunit*]* -[EfCore.InMemoryHelpers]*" -excludebyattribute:"System.CodeDom.Compiler.GeneratedCodeAttribute" -skipautoprops -oldStyle -mergeoutput -register:user -output:"coverage\OpenCover.xml"
 
-echo Restoring
-
-dotnet restore
-
-echo Building
-
-dotnet build $DOTNET_BUILD_ARGS
-
-echo Testing
-
-coverage=./coverage
-rm -rf $coverage
-mkdir $coverage
-
-dotnet test -f netcoreapp1.0 $DOTNET_TEST_ARGS test/Stubbery.IntegrationTests/Stubbery.IntegrationTests.csproj
-
-echo "Calculating coverage with OpenCover"
-$OPENCOVER \
-  -target:"c:\Program Files\dotnet\dotnet.exe" \
-  -targetargs:"test -f netcoreapp1.0 $DOTNET_TEST_ARGS test/Stubbery.IntegrationTests/Stubbery.IntegrationTests.csproj" \
-  -mergeoutput \
-  -hideskipped:File \
-  -output:$coverage/coverage.xml \
-  -oldStyle \
-  -filter:"+[Stubbery*]* -[Stubbery.*Tests*]*" \
-  -searchdirs:$testdir/bin/$CONFIG/netcoreapp1.0 \
-  -register:user
-
-echo "Generating HTML report"
-$REPORTGENERATOR \
-  -reports:$coverage/coverage.xml \
-  -targetdir:$coverage \
-  -verbosity:Error
+echo Running ReportGenerator
+"packages\ReportGenerator.3.1.2\tools\ReportGenerator.exe" "-reports:coverage\OpenCover.xml" "-targetdir:coverage"
