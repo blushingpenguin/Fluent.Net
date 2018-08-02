@@ -12,7 +12,6 @@ namespace Fluent.Net.Plural
         static LocaleRules()
         {
             // from: https://unicode.org/repos/cldr/trunk/common/supplemental/plurals.xml
-            string[] resNames = typeof(LocaleRules).Assembly.GetManifestResourceNames();
             var asm = typeof(LocaleRules).Assembly;
             using (var stream = asm.GetManifestResourceStream(
                 asm.GetName().Name + ".Plural.plurals.xml"))

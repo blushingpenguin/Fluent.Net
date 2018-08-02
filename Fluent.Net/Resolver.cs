@@ -346,7 +346,7 @@ namespace Fluent.Net
             }
 
             env.Errors.Add(new TypeError(
-                $"Unsupported external type: {externalArg.Name}, {arg.GetType()}"));
+                $"Unsupported external type: {externalArg.Name}, {arg?.GetType()?.ToString() ?? "null"}"));
             return new FluentNone(externalArg.Name);
         }
 

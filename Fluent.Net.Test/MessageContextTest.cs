@@ -431,5 +431,66 @@ namespace Fluent.Net.Test
             errors.Should().BeEquivalentTo(expectedErrors,
                 opts => opts.RespectingRuntimeTypes());
         }
+
+        [Test]
+        public void MessageWithExternalArguments()
+        {
+            var context = CreateContext(@"
+                external-arguments = This message has external arguments: string = { $stringArg } and number = { $numberArg }
+            ");
+            var errors = new List<FluentError>();
+            var msg = context.GetMessage("external-arguments");
+            var args = new Dictionary<string, object>()
+            {
+                { "stringArg", "test string" },
+                { "numberArg", "1.234" }
+            };
+            var result = context.Format(msg, args, errors);
+            result.Should().Be("This message has external arguments: string = test string and number = 1.234");
+            errors.Count.Should().Be(0);
+        }
+
+        [Test]
+        public void MessageWithMissingExternalArguments()
+        {
+            var context = CreateContext(@"
+                external-arguments = This message has external arguments: string = { $stringArg } and number = { $numberArg }
+            ");
+            var errors = new List<FluentError>();
+            var expectedErrors = new List<FluentError>()
+            {
+                new ReferenceError("Unknown external: $stringArg"),
+                new ReferenceError("Unknown external: $numberArg")
+            };
+            var msg = context.GetMessage("external-arguments");
+            var args = new Dictionary<string, object>();
+            var result = context.Format(msg, args, errors);
+            result.Should().Be("This message has external arguments: string = stringArg and number = numberArg");
+            errors.Should().BeEquivalentTo(expectedErrors,
+                opts => opts.RespectingRuntimeTypes());
+        }
+
+        [Test]
+        public void MessageWithNullExternalArgument()
+        {
+            var context = CreateContext(@"
+                external-arguments = This message has a null external argument: string = { $stringArg }
+            ");
+            var errors = new List<FluentError>();
+            var expectedErrors = new List<FluentError>()
+            {
+                new TypeError("Unsupported external type: stringArg, null"),
+            };
+            var msg = context.GetMessage("external-arguments");
+            var args = new Dictionary<string, object>()
+            {
+                { "stringArg", null },
+            };
+            var result = context.Format(msg, args, errors);
+            result.Should().Be("This message has a null external argument: string = stringArg");
+            errors.Should().BeEquivalentTo(expectedErrors,
+                opts => opts.RespectingRuntimeTypes());
+        }
+
     }
 }
