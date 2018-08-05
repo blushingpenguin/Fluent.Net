@@ -17,21 +17,21 @@ namespace Fluent.Net.Test
             return ToJson((dynamic)node);
         }
 
-        public static JToken ToJson(ExternalArgument arg)
+        public static JToken ToJson(VariableReference arg)
         {
             return new JObject
             {
-                { "type", "ext" },
+                { "type", "var" },
                 { "name", arg.Name }
             };
         }
 
-        public static JToken ToJson(StringExpression str)
+        public static JToken ToJson(StringLiteral str)
         {
             return new JValue(str.Value);
         }
 
-        public static JToken ToJson(NumberExpression num)
+        public static JToken ToJson(NumberLiteral num)
         {
             return new JObject
             {
@@ -63,11 +63,11 @@ namespace Fluent.Net.Test
             };
         }
 
-        public static JToken ToJson(VariantExpression var)
+        public static JToken ToJson(GetVariant var)
         {
             return new JObject
             {
-                { "type", "var" },
+                { "type", "getvar" },
                 { "id", ToJson(var.Id) },
                 { "key", ToJson(var.Key) }
             };
@@ -94,11 +94,11 @@ namespace Fluent.Net.Test
             };
         }
 
-        public static JToken ToJson(AttributeExpression attr)
+        public static JToken ToJson(GetAttribute attr)
         {
             return new JObject
             {
-                { "type", "attr" },
+                { "type", "getattr" },
                 { "id", ToJson(attr.Id) },
                 { "name", attr.Name }
             };
@@ -118,7 +118,12 @@ namespace Fluent.Net.Test
             return new JObject
             {
                 { "type", "call" },
-                { "fun", call.Function },
+                { "fun", new JObject
+                    {
+                        { "type", "fun" },
+                        { "name", call.Function }
+                    }
+                },
                 { "args", ToJson(call.Args) }
             };
         }
@@ -167,7 +172,7 @@ namespace Fluent.Net.Test
                     // but we need to produce it here for the tests to get the expected
                     // outputs.
                     JToken attributeValue;
-                    if (attribute.Value is StringExpression se)
+                    if (attribute.Value is StringLiteral se)
                     {
                         attributeValue = new JValue(se.Value);
                     }

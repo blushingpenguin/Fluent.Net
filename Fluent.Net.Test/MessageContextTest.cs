@@ -107,7 +107,7 @@ namespace Fluent.Net.Test
             var ctx = CreateHasMessageContext();
             var expected = new RuntimeAst.Message()
             {
-                Value = new RuntimeAst.StringExpression() { Value = "Foo" }
+                Value = new RuntimeAst.StringLiteral() { Value = "Foo" }
             };
             ctx.GetMessage("foo").Should().BeEquivalentTo(expected);
         }
@@ -433,61 +433,61 @@ namespace Fluent.Net.Test
         }
 
         [Test]
-        public void MessageWithExternalArguments()
+        public void MessageWithVariables()
         {
             var context = CreateContext(@"
-                external-arguments = This message has external arguments: string = { $stringArg } and number = { $numberArg }
+                variables = This message has variables: string = { $stringArg } and number = { $numberArg }
             ");
             var errors = new List<FluentError>();
-            var msg = context.GetMessage("external-arguments");
+            var msg = context.GetMessage("variables");
             var args = new Dictionary<string, object>()
             {
                 { "stringArg", "test string" },
                 { "numberArg", "1.234" }
             };
             var result = context.Format(msg, args, errors);
-            result.Should().Be("This message has external arguments: string = test string and number = 1.234");
+            result.Should().Be("This message has variables: string = test string and number = 1.234");
             errors.Count.Should().Be(0);
         }
 
         [Test]
-        public void MessageWithMissingExternalArguments()
+        public void MessageWithMissingVariables()
         {
             var context = CreateContext(@"
-                external-arguments = This message has external arguments: string = { $stringArg } and number = { $numberArg }
+                variables = This message has variables: string = { $stringArg } and number = { $numberArg }
             ");
             var errors = new List<FluentError>();
             var expectedErrors = new List<FluentError>()
             {
-                new ReferenceError("Unknown external: $stringArg"),
-                new ReferenceError("Unknown external: $numberArg")
+                new ReferenceError("Unknown variable: $stringArg"),
+                new ReferenceError("Unknown variable: $numberArg")
             };
-            var msg = context.GetMessage("external-arguments");
+            var msg = context.GetMessage("variables");
             var args = new Dictionary<string, object>();
             var result = context.Format(msg, args, errors);
-            result.Should().Be("This message has external arguments: string = stringArg and number = numberArg");
+            result.Should().Be("This message has variables: string = stringArg and number = numberArg");
             errors.Should().BeEquivalentTo(expectedErrors,
                 opts => opts.RespectingRuntimeTypes());
         }
 
         [Test]
-        public void MessageWithNullExternalArgument()
+        public void MessageWithNullVariables()
         {
             var context = CreateContext(@"
-                external-arguments = This message has a null external argument: string = { $stringArg }
+                variables = This message has a null variable: string = { $stringArg }
             ");
             var errors = new List<FluentError>();
             var expectedErrors = new List<FluentError>()
             {
-                new TypeError("Unsupported external type: stringArg, null"),
+                new TypeError("Unsupported variable type: stringArg, null"),
             };
-            var msg = context.GetMessage("external-arguments");
+            var msg = context.GetMessage("variables");
             var args = new Dictionary<string, object>()
             {
                 { "stringArg", null },
             };
             var result = context.Format(msg, args, errors);
-            result.Should().Be("This message has a null external argument: string = stringArg");
+            result.Should().Be("This message has a null variable: string = stringArg");
             errors.Should().BeEquivalentTo(expectedErrors,
                 opts => opts.RespectingRuntimeTypes());
         }

@@ -40,7 +40,7 @@ namespace Fluent.Net.Test
             };
             a.Should().Throw<ArgumentNullException>();
 
-            a = () => serializer.SerializeExpression(null, new Ast.StringExpression());
+            a = () => serializer.SerializeExpression(null, new Ast.StringLiteral());
             a.Should().Throw<ArgumentNullException>();
 
             a = () => serializer.SerializeExpression(null, null);
@@ -75,7 +75,7 @@ namespace Fluent.Net.Test
         }
 
         [Test]
-        public void ExternalArgument()
+        public void Variable()
         {
             var input = Ftl(@"
               foo = { $ext }

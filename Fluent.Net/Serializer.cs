@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -188,8 +189,24 @@ namespace Fluent.Net
             writer.Dedent();
         }
 
+        static void SerializeValue(IndentingWriter writer, Ast.SyntaxNode value)
+        {
+            if (value is Ast.Pattern pattern)
+            {
+                SerializePattern(writer, pattern);
+            }
+            else if (value is Ast.VariantList variantList)
+            {
+                SerializeVariantList(writer, variantList);
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    $"Unknown value type {value.GetType()}");
+            }
+        }
 
-        static void SerializeValue(IndentingWriter writer, Ast.Pattern pattern)
+        static void SerializePattern(IndentingWriter writer, Ast.Pattern pattern)
         {
             writer.Indent();
             if (pattern.Elements.Any(IncludesNewLine) ||
@@ -202,17 +219,24 @@ namespace Fluent.Net
                 writer.Write(' ');
             }
 
-            SerializePattern(writer, pattern);
-            writer.Dedent();
-        }
-
-        static void SerializePattern(IndentingWriter writer,
-            Ast.Pattern pattern)
-        {
             foreach (var element in pattern.Elements)
             {
                 SerializeElement(writer, element);
             }
+
+            writer.Dedent();
+        }
+
+        static void SerializeVariantList(IndentingWriter writer, Ast.VariantList variantList)
+        {
+            writer.Indent();
+            writer.Write("\n{");
+            foreach (var variant in variantList.Variants)
+            {
+                SerializeVariant(writer, variant);
+            }
+            writer.Write("\n}");
+            writer.Dedent();
         }
 
         static void SerializeElement(IndentingWriter writer,
@@ -245,22 +269,22 @@ namespace Fluent.Net
             Ast.Placeable placeable)
         {
             var expr = placeable.Expression;
-            // can't happen!?
-            // if (expr is Ast.Placeable placeableExpr)
-            // {
-            //     writer.Write('{');
-            //     SerializePlaceable(writer, placeableExpr);
-            //     writer.Write('}');
-            // }
-            if (expr is Ast.SelectExpression selectExpr)
+            if (expr is Ast.Placeable placeableExpr)
+            {
+                writer.Write('{');
+                SerializePlaceable(writer, placeableExpr);
+                writer.Write('}');
+            }
+            else if (expr is Ast.SelectExpression selectExpr)
             {
                 // Special-case select expression to control the whitespace around the
                 // opening and the closing brace.
-                writer.Write('{');
-                if (selectExpr.Expression != null)
-                {
-                    writer.Write(' ');
-                }
+                writer.Write("{ ");
+                // TODO: writer.Write(');
+                // TODO: if (selectExpr.Selector != null)
+                // TODO: {
+                // TODO:     writer.Write(' ');
+                // TODO: }
                 SerializeSelectExpression(writer, selectExpr);
                 writer.Write('}');
             }
@@ -272,7 +296,7 @@ namespace Fluent.Net
             }
         }
 
-        public void SerializeExpression(TextWriter writer, Ast.Expression expression)
+        public void SerializeExpression(TextWriter writer, Ast.SyntaxNode expression)
         {
             if (expression == null)
             {
@@ -288,23 +312,23 @@ namespace Fluent.Net
         }
 
         static void SerializeExpression(IndentingWriter writer,
-            Ast.Expression expression)
+            Ast.SyntaxNode expression)
         {
-            if (expression is Ast.StringExpression stringExpression)
+            if (expression is Ast.StringLiteral stringLiteral)
             {
-                SerializeStringExpression(writer, stringExpression);
+                SerializeStringLiteral(writer, stringLiteral);
             }
-            else if (expression is Ast.NumberExpression numberExpression)
+            else if (expression is Ast.NumberLiteral numberLiteral)
             {
-                SerializeNumberExpression(writer, numberExpression);
+                SerializeNumberLiteral(writer, numberLiteral);
             }
-            else if (expression is Ast.MessageReference messageReference)
+            else if (expression is Ast.MessageTermReference mtReference)
             {
-                SerializeMessageReference(writer, messageReference);
+                SerializeMessageTermReference(writer, mtReference);
             }
-            else if (expression is Ast.ExternalArgument externalArgument)
+            else if (expression is Ast.VariableReference varReference)
             {
-                SerializeExternalArgument(writer, externalArgument);
+                SerializeVariableReference(writer, varReference);
             }
             else if (expression is Ast.AttributeExpression attributeExpression)
             {
@@ -322,6 +346,10 @@ namespace Fluent.Net
             {
                 SerializeSelectExpression(writer, selectExpression);
             }
+            else if (expression is Ast.Placeable placeable)
+            {
+                SerializePlaceable(writer, placeable);
+            }
             else
             {
                 throw new InvalidOperationException(
@@ -329,41 +357,40 @@ namespace Fluent.Net
             }
         }
 
-        static void SerializeStringExpression(IndentingWriter writer,
-            Ast.StringExpression expr)
+        static void SerializeStringLiteral(IndentingWriter writer,
+            Ast.StringLiteral expr)
         {
             writer.Write('"');
             writer.Write(expr.Value);
             writer.Write('"');
         }
 
-        static void SerializeNumberExpression(IndentingWriter writer,
-            Ast.NumberExpression expr)
+        static void SerializeNumberLiteral(IndentingWriter writer,
+            Ast.NumberLiteral expr)
         {
             writer.Write(expr.Value);
         }
 
-        static void SerializeMessageReference(IndentingWriter writer,
-            Ast.MessageReference messageReference)
+        static void SerializeMessageTermReference(IndentingWriter writer,
+            Ast.MessageTermReference mtReference)
         {
-            SerializeIdentifier(writer, messageReference.Id);
+            SerializeIdentifier(writer, mtReference.Id);
         }
 
-        static void SerializeExternalArgument(IndentingWriter writer,
-            Ast.ExternalArgument externalArgument)
+        static void SerializeVariableReference(IndentingWriter writer,
+            Ast.VariableReference varReference)
         {
             writer.Write('$');
-            SerializeIdentifier(writer, externalArgument.Id);
+            SerializeIdentifier(writer, varReference.Id);
         }
+
 
         static void SerializeSelectExpression(IndentingWriter writer,
             Ast.SelectExpression expr)
         {
-            if (expr.Expression != null)
-            {
-                SerializeExpression(writer, expr.Expression);
-                writer.Write(" ->");
-            }
+            SerializeExpression(writer, expr.Selector);
+            writer.Write(" ->");
+
             if (expr.Variants != null)
             {
                 foreach (var variant in expr.Variants)
@@ -398,7 +425,7 @@ namespace Fluent.Net
         static void SerializeAttributeExpression(IndentingWriter writer,
             Ast.AttributeExpression expr)
         {
-            SerializeIdentifier(writer, expr.Id);
+            SerializeExpression(writer, expr.Ref);
             writer.Write('.');
             SerializeIdentifier(writer, expr.Name);
         }
@@ -412,43 +439,38 @@ namespace Fluent.Net
             writer.Write(']');
         }
 
+        static void SerializeArgumentList<T>(IndentingWriter writer,
+            ref bool first, IReadOnlyList<T> args, Action<T> serializeArg)
+        {
+            foreach (var arg in args)
+            {
+                if (!first)
+                {
+                    writer.Write(", ");
+                }
+                first = false;
+                serializeArg(arg);
+            }
+        }
+
+
         static void SerializeCallExpression(IndentingWriter writer,
             Ast.CallExpression expr)
         {
             SerializeFunction(writer, expr.Callee);
             writer.Write('(');
-            if (expr.Args != null)
+            bool first = true;
+            if (expr.Positional != null)
             {
-                bool first = true;
-                foreach (var arg in expr.Args)
-                {
-                    if (!first)
-                    {
-                        writer.Write(", ");
-                    }
-                    first = false;
-                    SerializeCallArgument(writer, arg);
-                }
+                SerializeArgumentList(writer, ref first, expr.Positional,
+                    (arg) => SerializeExpression(writer, arg));
+            }
+            if (expr.Named != null)
+            {
+                SerializeArgumentList(writer, ref first, expr.Named,
+                    (arg) => SerializeNamedArgument(writer, arg));
             }
             writer.Write(')');
-        }
-
-        static void SerializeCallArgument(IndentingWriter writer,
-            Ast.SyntaxNode arg)
-        {
-            if (arg is Ast.NamedArgument namedArgument)
-            {
-                SerializeNamedArgument(writer, namedArgument);
-            }
-            else if (arg is Ast.Expression expression)
-            {
-                SerializeExpression(writer, expression);
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    $"Unknown call argument type: {arg.GetType()}");
-            }
         }
 
         static void SerializeNamedArgument(IndentingWriter writer,
@@ -462,14 +484,13 @@ namespace Fluent.Net
         static void SerializeArgumentValue(IndentingWriter writer,
             Ast.Expression argValue)
         {
-            if (argValue is Ast.StringExpression stringExpression)
+            if (argValue is Ast.StringLiteral stringLiteral)
             {
-                SerializeStringExpression(writer, stringExpression);
+                SerializeStringLiteral(writer, stringLiteral);
             }
-            else if (argValue is Ast.NumberExpression numberExpression)
+            else if (argValue is Ast.NumberLiteral numberLiteral)
             {
-                SerializeNumberExpression(writer, numberExpression);
-
+                SerializeNumberLiteral(writer, numberLiteral);
             }
             else
             {
@@ -503,9 +524,9 @@ namespace Fluent.Net
             {
                 SerializeVariantName(writer, variantName);
             }
-            else if (key is Ast.NumberExpression numberExpression)
+            else if (key is Ast.NumberLiteral numberLiteral)
             {
-                SerializeNumberExpression(writer, numberExpression);
+                SerializeNumberLiteral(writer, numberLiteral);
             }
             else
             {

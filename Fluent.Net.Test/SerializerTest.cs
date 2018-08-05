@@ -156,7 +156,7 @@ namespace Fluent.Net.Test
         }
 
         [Test]
-        public void ExternalArgument()
+        public void Variable()
         {
             var input = Ftl(@"
               foo = Foo { $bar }
@@ -232,7 +232,7 @@ namespace Fluent.Net.Test
               ## Comment Header
               ##
               ## A multiline
-              ## section comment.
+              ## group comment.
 
               bar = Bar
             ");
@@ -264,20 +264,6 @@ namespace Fluent.Net.Test
         }
 
         [Test]
-        public void AttributeZeroPointFourSyntax()
-        {
-            var input = Ftl(@"
-              foo
-                  .attr = Foo Attr
-            ");
-            var output = Ftl(@"
-              foo =
-                  .attr = Foo Attr
-            ");
-            Pretty(input).Should().Be(output);
-        }
-
-        [Test]
         public void Attribute()
         {
             var input = Ftl(@"
@@ -297,22 +283,6 @@ namespace Fluent.Net.Test
                       Continued
             ");
             Pretty(input).Should().Be(input);
-        }
-
-        [Test]
-        public void TwoAttributesZeroPointFourSyntax()
-        {
-            var input = Ftl(@"
-              foo
-                  .attr-a = Foo Attr A
-                  .attr-b = Foo Attr B
-            ");
-            var output = Ftl(@"
-              foo =
-                  .attr-a = Foo Attr A
-                  .attr-b = Foo Attr B
-            ");
-            Pretty(input).Should().Be(output);
         }
 
         [Test]
@@ -351,10 +321,10 @@ namespace Fluent.Net.Test
         }
 
         [Test]
-        public void SelectExpressionWithoutSelector()
+        public void VariantList()
         {
             var input = Ftl(@"
-              foo =
+              -foo =
                   {
                      *[a] A
                       [b] B
@@ -381,7 +351,7 @@ namespace Fluent.Net.Test
         {
             var input = Ftl(@"
               foo =
-                  {
+                  { $sel ->
                      *[a]
                           AAA
                           BBB
@@ -395,14 +365,14 @@ namespace Fluent.Net.Test
         {
             var input = Ftl(@"
               foo =
-                  {
+                  { $sel ->
                      *[a] AAA
                           BBB
                   }
             ");
             var output = Ftl(@"
               foo =
-                  {
+                  { $sel ->
                      *[a]
                           AAA
                           BBB
@@ -416,7 +386,7 @@ namespace Fluent.Net.Test
         {
             var input = Ftl(@"
               foo =
-                  {
+                  { $sel ->
                      *[a b c] A B C
                   }
             ");
@@ -428,7 +398,7 @@ namespace Fluent.Net.Test
         {
             var input = Ftl(@"
               foo =
-                  {
+                  { $sel ->
                      *[1] 1
                   }
             ");
@@ -497,7 +467,7 @@ namespace Fluent.Net.Test
         }
 
         [Test]
-        public void SelectorExternalArgument()
+        public void SelectorVariable()
         {
             var input = Ftl(@"
               foo =
@@ -581,7 +551,7 @@ namespace Fluent.Net.Test
         }
 
         [Test]
-        public void CallExpressionWithExternalArgument()
+        public void CallExpressionWithVariable()
         {
             var input = Ftl(@"
               foo = { FOO($bar) }
@@ -629,7 +599,187 @@ namespace Fluent.Net.Test
         public void CallExpressionWithPositionalAndNamedArguments()
         {
             var input = Ftl(@"
-              foo = { FOO(bar, baz: ""baz"", 1) }
+              foo = { FOO(bar, 1, baz: ""baz"") }
+            ");
+            Pretty(input).Should().Be(input);
+        }
+
+        [Test]
+        public void NestedPlaceables()
+        {
+            var input = Ftl(@"
+                foo = {{ FOO() }}
+            ");
+            Pretty(input).Should().Be(input);
+        }
+
+        [Test]
+        public void EscapedSpecialCharInTextElement()
+        {
+            var input = Ftl(@"
+                foo = \{Escaped}
+            ");
+            Pretty(input).Should().Be(input);
+        }
+
+        [Test]
+        public void EscapedSpecialCharInStringLiteral()
+        {
+            var input = Ftl(@"
+                foo = { ""Escaped \"" quote"" }
+            ");
+            Pretty(input).Should().Be(input);
+        }
+
+        [Test]
+        public void UnicodeEscapeSequence()
+        {
+            var input = Ftl(@"
+                foo = \u0065
+            ");
+            Pretty(input).Should().Be(input);
+        }
+
+        static string PrettyExpr(string text)
+        {
+            using (var sr = new StringReader(text))
+            using (var sw = new StringWriter())
+            {
+                var parser = new Parser();
+                var entry = parser.ParseEntry(sr);
+                entry.Should().BeOfType<Ast.Message>();
+                var message = (Ast.Message)entry;
+                message.Value.Should().BeOfType<Ast.Pattern>();
+                var pattern = (Ast.Pattern)message.Value;
+                pattern.Elements.Count.Should().BeGreaterThan(0);
+                pattern.Elements[0].Should().BeOfType<Ast.Placeable>();
+                var placeable = (Ast.Placeable)pattern.Elements[0];
+                var serializer = new Serializer();
+                serializer.SerializeExpression(sw, placeable.Expression);
+                return sw.ToString();
+            }
+        }
+
+        [Test]
+        public void ExprStringExpression()
+        {
+            var input = Ftl(@"
+                foo = { ""str"" }
+            ");
+            PrettyExpr(input).Should().Be("\"str\"");
+        }
+
+        [Test]
+        public void NumberExpression()
+        {
+            var input = Ftl(@"
+                foo = { 3 }
+            ");
+            PrettyExpr(input).Should().Be("3");
+        }
+
+        [Test]
+        public void ExprMessageReference()
+        {
+            var input = Ftl(@"
+                foo = { msg }
+            ");
+            PrettyExpr(input).Should().Be("msg");
+        }
+
+        [Test]
+        public void ExprVariable()
+        {
+            var input = Ftl(@"
+                foo = { $ext }
+            ");
+            PrettyExpr(input).Should().Be("$ext");
+        }
+
+        [Test]
+        public void ExprAttributeExpression()
+        {
+            var input = Ftl(@"
+                foo = { msg.attr }
+            ");
+            PrettyExpr(input).Should().Be("msg.attr");
+        }
+
+        [Test]
+        public void ExprVariantExpression()
+        {
+            var input = Ftl(@"
+                foo = { -msg[variant] }
+            ");
+            PrettyExpr(input).Should().Be("-msg[variant]");
+        }
+
+        [Test]
+        public void ExprCallExpression()
+        {
+            var input = Ftl(@"
+                foo = { BUILTIN(3.14, kwarg: ""value"") }
+            ");
+            var output = "BUILTIN(3.14, kwarg: \"value\")";
+            PrettyExpr(input).Should().Be(output);
+        }
+
+        [Test]
+        public void ExprSelectExpression()
+        {
+            var input = Ftl(@"
+                foo =
+                        { $num ->
+                                *[one] One
+                        }
+            ");
+            PrettyExpr(input).Should().Be("$num ->\n   *[one] One\n");
+        }
+
+        [Test]
+        public void StandaloneCommentHasNotPaddingWhenFirst()
+        {
+            var input = Ftl(@"
+                # Comment A
+
+                foo = Foo
+
+                # Comment B
+
+                bar = Bar
+            ");
+            Pretty(input).Should().Be(input);
+            // Run again to make sure the same instance of the serializer doesn't keep
+            // state about how many entires is has already serialized.
+            Pretty(input).Should().Be(input);
+        }
+
+        [Test]
+        public void GroupCommentHasnotPaddingWhenFirst()
+        {
+            var input = Ftl(@"
+                ## Group A
+
+                foo = Foo
+
+                ## Group B
+
+                bar = Bar
+            ");
+            Pretty(input).Should().Be(input);
+        }
+
+        [Test]
+        public void ResourceCommentHasnotPaddingWhenFirst()
+        {
+            var input = Ftl(@"
+                ### Resource Comment A
+
+                foo = Foo
+
+                ### Resource Comment B
+
+                bar = Bar
             ");
             Pretty(input).Should().Be(input);
         }

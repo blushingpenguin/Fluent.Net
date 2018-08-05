@@ -18,7 +18,10 @@ namespace Fluent.Net.Test
         public static JToken ToJson(SyntaxNode node)
         {
             var obj = new JObject();
-            obj["span"] = ToJson(node.Span);
+            if (node.Span != null)
+            {
+                obj["span"] = ToJson(node.Span);
+            }
             return obj;
         }
 
@@ -31,10 +34,11 @@ namespace Fluent.Net.Test
             return obj;
         }
 
-        public static JToken ToJson(Entry entry)
+        public static JToken ToJson(VariantList variantList)
         {
-            var obj = (JObject)ToJson((SyntaxNode)entry);
-            obj["annotations"] = new JArray(entry.Annotations.Select(
+            var obj = (JObject)ToJson((SyntaxNode)variantList);
+            obj["type"] = "VariantList";
+            obj["variants"] = new JArray(variantList.Variants.Select(
                 x => ToJson(x)));
             return obj;
         }
@@ -46,7 +50,7 @@ namespace Fluent.Net.Test
                 new JArray(mt.Attributes.Select(x => ToJson(x)));
             obj["comment"] = mt.Comment == null ? null : ToJson(mt.Comment);
             obj["id"] = mt.Id == null ? null : ToJson((dynamic)mt.Id);
-            obj["value"] = mt.Value == null ? null : ToJson(mt.Value);
+            obj["value"] = mt.Value == null ? null : ToJson((dynamic)mt.Value);
             return obj;
         }
 
@@ -89,34 +93,47 @@ namespace Fluent.Net.Test
             return obj;
         }
 
-        public static JToken ToJson(StringExpression se)
+        public static JToken ToJson(StringLiteral se)
         {
             var obj = (JObject)ToJson((Expression)se);
-            obj["type"] = "StringExpression";
+            obj["type"] = "StringLiteral";
             obj["value"] = se.Value;
             return obj;
         }
 
-        public static JToken ToJson(NumberExpression ne)
+        public static JToken ToJson(NumberLiteral ne)
         {
             var obj = (JObject)ToJson((Expression)ne);
-            obj["type"] = "NumberExpression";
+            obj["type"] = "NumberLiteral";
             obj["value"] = ne.Value;
             return obj;
         }
 
-        public static JToken ToJson(MessageReference me)
+        public static JToken ToJson(MessageTermReference mtRef)
         {
-            var obj = (JObject)ToJson((Expression)me);
-            obj["type"] = "MessageReference";
-            obj["id"] = ToJson((dynamic)me.Id);
+            var obj = (JObject)ToJson((Expression)mtRef);
+            obj["id"] = ToJson((dynamic)mtRef.Id);
             return obj;
         }
 
-        public static JToken ToJson(ExternalArgument arg)
+        public static JToken ToJson(TermReference tref)
+        {
+            var obj = (JObject)ToJson((MessageTermReference)tref);
+            obj["type"] = "TermReference";
+            return obj;
+        }
+
+        public static JToken ToJson(MessageReference mref)
+        {
+            var obj = (JObject)ToJson((MessageTermReference)mref);
+            obj["type"] = "MessageReference";
+            return obj;
+        }
+
+        public static JToken ToJson(VariableReference arg)
         {
             var obj = (JObject)ToJson((Expression)arg);
-            obj["type"] = "ExternalArgument";
+            obj["type"] = "VariableReference";
             obj["id"] = ToJson((dynamic)arg.Id);
             return obj;
         }
@@ -125,8 +142,8 @@ namespace Fluent.Net.Test
         {
             var obj = (JObject)ToJson((Expression)se);
             obj["type"] = "SelectExpression";
-            obj["expression"] = se.Expression == null ? null : 
-                ToJson((dynamic)se.Expression);
+            obj["selector"] = se.Selector == null ? null : 
+                ToJson((dynamic)se.Selector);
             obj["variants"] = se.Variants == null ? new JArray() :
                 new JArray(se.Variants.Select(x => ToJson(x)));
             return obj;
@@ -136,7 +153,7 @@ namespace Fluent.Net.Test
         {
             var obj = (JObject)ToJson((Expression)ae);
             obj["type"] = "AttributeExpression";
-            obj["id"] = ToJson((dynamic)ae.Id);
+            obj["ref"] = ToJson((dynamic)ae.Ref);
             obj["name"] = ToJson((dynamic)ae.Name);
             return obj;
         }
@@ -155,8 +172,10 @@ namespace Fluent.Net.Test
             var obj = (JObject)ToJson((Expression)ce);
             obj["type"] = "CallExpression";
             obj["callee"] = ToJson(ce.Callee);
-            obj["args"] = ce.Args == null ? new JArray() :
-                new JArray(ce.Args.Select(x => ToJson((dynamic)x)));
+            obj["positional"] = ce.Positional == null ? new JArray() :
+                new JArray(ce.Positional.Select(x => ToJson((dynamic)x)));
+            obj["named"] = ce.Named == null ? new JArray() :
+                new JArray(ce.Named.Select(x => ToJson((dynamic)x)));
             return obj;
         }
 
@@ -241,6 +260,8 @@ namespace Fluent.Net.Test
         public static JToken ToJson(Junk junk)
         {
             var obj = (JObject)ToJson((Entry)junk);
+            obj["annotations"] = new JArray(junk.Annotations.Select(
+                x => ToJson(x)));
             obj["type"] = "Junk";
             obj["content"] = junk.Content;
             return obj;

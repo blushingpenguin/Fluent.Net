@@ -35,7 +35,7 @@ namespace Fluent.Net.Test
         }
 
         [Test]
-        public void IsolatesInterpolatedStringTypedExternalArguments()
+        public void IsolatesInterpolatedStringTypedVariables()
         {
             var ctx = CreateInterpolationsContext();
             var errors = new List<FluentError>();
@@ -47,7 +47,7 @@ namespace Fluent.Net.Test
         }
 
         [Test]
-        public void IsolatesInterpolatedNumberTypedExternalArguments()
+        public void IsolatesInterpolatedNumberTypedVariables()
         {
             var ctx = CreateInterpolationsContext();
             var errors = new List<FluentError>();
@@ -59,7 +59,7 @@ namespace Fluent.Net.Test
         }
 
         [Test]
-        public void IsolatesInterpolatedDateTypedExternalArguments()
+        public void IsolatesInterpolatedDateTypedVariables()
         {
             var ctx = CreateInterpolationsContext();
             var errors = new List<FluentError>();

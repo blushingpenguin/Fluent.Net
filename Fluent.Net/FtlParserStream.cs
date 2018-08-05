@@ -15,6 +15,11 @@ namespace Fluent.Net
             return c == ' ' || c == '\t';
         }
 
+        public static bool IsWhite(int c)
+        {
+            return IsInlineWs(c) || c == '\r' || c == '\n';
+        }
+
         public void SkipInlineWs()
         {
             while (IsInlineWs(Current))
@@ -30,20 +35,32 @@ namespace Fluent.Net
             }
         }
 
-        public void SkipBlankLines()
+        public int SkipBlankLines()
         {
+            int lineCount = 0;
             while (true)
             {
                 PeekInlineWs();
 
-                if (CurrentPeekIs('\r') || CurrentPeekIs('\n'))
+                bool isCR = CurrentPeekIs('\r');
+                if (isCR || CurrentPeekIs('\n'))
                 {
+                    if (isCR)
+                    {
+                        int peekIndex = GetPeekIndex();
+                        if (Peek() != '\n')
+                        {
+                            ResetPeek(peekIndex);
+                        }
+                    }
+                    SkipToPeek();
                     Next();
+                    ++lineCount;
                 }
                 else
                 {
                     ResetPeek();
-                    break;
+                    return lineCount;
                 }
             }
         }
@@ -107,6 +124,11 @@ namespace Fluent.Net
                 Next();
                 return;
             }
+            if (Current == Eof)
+            {
+                // EOF is a valid line end in Fluent.
+                return;
+            }
             // Unicode Character 'SYMBOL FOR NEWLINE' (U+2424)
             throw new ParseException("E0003", "\u2424");
         }
@@ -117,16 +139,6 @@ namespace Fluent.Net
             SkipBlankLines();
             ExpectChar(' ');
             SkipInlineWs();
-        }
-
-        public bool TakeCharIf(int ch)
-        {
-            if (Current == ch)
-            {
-                Next();
-                return true;
-            }
-            return false;
         }
 
         public int TakeChar(Func<int, bool> f)
@@ -146,28 +158,17 @@ namespace Fluent.Net
                    (ch >= 'A' && ch <= 'Z');
         }
 
-        public bool IsEntryIDStart()
+        public bool IsIdentifierStart()
         {
-            if (CurrentIs('-'))
-            {
-                Peek();
-            }
-
-            int ch = CurrentPeek;
-            bool isID = IsCharIDStart(ch);
+            bool isID = IsCharIDStart(CurrentPeek);
             ResetPeek();
             return isID;
         }
 
         public bool IsNumberStart()
         {
-            if (CurrentIs('-'))
-            {
-                Peek();
-            }
-
-            int ch = CurrentPeek;
-            bool isDigit = ch >= '0' && ch <= '9';
+            int ch = CurrentIs('-') ? Peek() : Current;
+            bool isDigit = IsDigit(ch);
             ResetPeek();
             return isDigit;
         }
@@ -182,7 +183,7 @@ namespace Fluent.Net
             {
                 Next();
             }
-        }  
+        }
 
         public bool IsPeekNewLine()
         {
@@ -204,7 +205,7 @@ namespace Fluent.Net
                 && ch != '[' && ch != '*';
         }
 
-        public bool IsPeekPatternStart()
+        public bool IsPeekValueStart()
         {
             PeekInlineWs();
             int ch = CurrentPeek;
@@ -215,30 +216,7 @@ namespace Fluent.Net
                 return true;
             }
 
-            return IsPeekNextLinePatternStart();
-        }
-
-        public bool IsPeekNextLineZeroFourStyleComment()
-        {
-            if (!IsPeekNewLine())
-            {
-                return false;
-            }
-
-            Peek();
-
-            if (CurrentPeekIs('/'))
-            {
-                Peek();
-                if (CurrentPeekIs('/'))
-                {
-                    ResetPeek();
-                    return true;
-                }
-            }
-
-            ResetPeek();
-            return false;
+            return IsPeekNextLineValue();
         }
 
         // -1 - any
@@ -259,7 +237,7 @@ namespace Fluent.Net
                 Peek();
                 if (!CurrentPeekIs('#'))
                 {
-                    if (i != level && level != -1)
+                    if (i <= level && level != -1)
                     {
                         ResetPeek();
                         return false;
@@ -347,7 +325,7 @@ namespace Fluent.Net
             return false;
         }
 
-        public bool IsPeekNextLinePatternStart()
+        public bool IsPeekNextLineValue()
         {
             if (!IsPeekNewLine())
             {
@@ -378,7 +356,7 @@ namespace Fluent.Net
             return true;
         }
 
-        public void SkipToNextEntryStart()
+        public void SkipToNextEntryStart(bool skipComments = false)
         {
             while (Current != Eof)
             {
@@ -397,10 +375,9 @@ namespace Fluent.Net
                     if (Current != '\r' && Current != '\n')
                     {
                         if (Current == Eof ||
-                            IsEntryIDStart() ||
-                            CurrentIs('#') ||
-                            (CurrentIs('/') && PeekCharIs('/')) ||
-                            (CurrentIs('[') && PeekCharIs('[')))
+                            IsIdentifierStart() ||
+                            CurrentIs('-') ||
+                            (!skipComments && CurrentIs('#')))
                         {
                             break;
                         }
@@ -413,14 +390,8 @@ namespace Fluent.Net
             }
         }
 
-        public int TakeIDStart(bool allowTerm)
+        public int TakeIDStart()
         {
-            if (allowTerm && CurrentIs('-'))
-            {
-                Next();
-                return '-';
-            }
-
             if (IsCharIDStart(Current))
             {
                 int ret = Current;
@@ -428,8 +399,7 @@ namespace Fluent.Net
                 return ret;
             }
 
-            string allowedRange = allowTerm ? "a-zA-Z-" : "a-zA-Z";
-            throw new ParseException("E0004", allowedRange);
+            throw new ParseException("E0004", "a-zA-Z");
         }
 
         public static bool IsIdChar(int ch)
@@ -466,6 +436,18 @@ namespace Fluent.Net
         public int TakeDigit()
         {
             return TakeChar(IsDigit);
+        }
+
+        public static bool IsHexDigit(int ch)
+        {
+            return IsDigit(ch) ||
+                (ch >= 'A' && ch <= 'F') ||
+                (ch >= 'a' && ch <= 'f');
+        }
+
+        public int TakeHexDigit()
+        {
+            return TakeChar(IsHexDigit);
         }
     }
 }

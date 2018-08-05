@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -12,7 +13,6 @@ namespace Fluent.Net
         internal static Regex s_fnName = new Regex("^[A-Z][A-Z_?-]*$", RegexOptions.Compiled);
 
         bool _withSpans;
-        bool _lastCommentZeroFourSyntax = false;
 
         public Parser(bool withSpans = true)
         {
@@ -21,6 +21,11 @@ namespace Fluent.Net
 
         T SpanWrapper<T>(FtlParserStream ps, Func<T> wrappedFn) where T : Ast.SyntaxNode
         {
+            if (!_withSpans)
+            {
+                return wrappedFn();
+            }
+
             int start = ps.GetIndex();
             var node = wrappedFn();
 
@@ -29,15 +34,6 @@ namespace Fluent.Net
             if (node.Span != null)
             {
                 return node;
-            }
-
-            // Spans of Messages and Sections should include the attached Comment.
-            if (node is Ast.Message message)
-            {
-                if (message.Comment != null)
-                {
-                    start = message.Comment.Span.Start;
-                }
             }
 
             var end = ps.GetIndex();
@@ -50,37 +46,61 @@ namespace Fluent.Net
             return SpanWrapper(ps, () => wrappedFn(ps));
         }
 
+        public static string TrimRight(string s)
+        {
+            int end = s.Length;
+            for (; end > 0 && FtlParserStream.IsWhite(s[end - 1]); --end)
+            {
+            }
+            return s.Length == end ? s : s.Substring(0, end);
+        }
+
         public Ast.Resource Parse(TextReader input)
         {
             var ps = new FtlParserStream(input);
             ps.SkipBlankLines();
 
             var entries = new List<Ast.Entry>();
+            Ast.Comment lastComment = null;
 
             while (ps.Current != Eof)
             {
                 var entry = GetEntryOrJunk(ps);
 
-                if (entry == null)
+                int blankLines = ps.SkipBlankLines();
+                // Regular Comments require special logic. Comments may be attached to
+                // Messages or Terms if they are followed immediately by them. However
+                // they should parse as standalone when they're followed by Junk.
+                // Consequently, we only attach Comments once we know that the Message
+                // or the Term parsed successfully.
+                if (entry is Ast.Comment comment && 
+                    blankLines == 0 && ps.Current != Eof)
                 {
-                    // That happens when we get a 0.4 style section
+                    // Stash the comment and decide what to do with it in the next pass.
+                    lastComment = comment;
                     continue;
                 }
 
-                if (entry is Ast.Comment comment &&
-                    _lastCommentZeroFourSyntax && entries.Count == 0)
+                if (lastComment != null)
                 {
-                    var resourceComment = new Ast.ResourceComment(comment.Content);
-                    resourceComment.Span = comment.Span;
-                    entries.Add(resourceComment);
+                    if (entry is Ast.MessageTermBase mt)
+                    {
+                        mt.Comment = lastComment;
+                        if (_withSpans)
+                        {
+                            mt.Span.Start = lastComment.Span.Start;
+                        }
+                    }
+                    else
+                    {
+                        entries.Add(lastComment);
+                    }
+                    // In either case, the stashed comment has been dealt with; clear it.
+                    lastComment = null;
                 }
-                else
-                {
-                    entries.Add(entry);
-                }
-
-                _lastCommentZeroFourSyntax = false;
-                ps.SkipBlankLines();
+                
+                // No special logic for other types of entries.
+                entries.Add(entry);
             }
 
             var res = new Ast.Resource(entries);
@@ -93,10 +113,31 @@ namespace Fluent.Net
             return res;
         }
 
+        /// <summary>
+        /// Parse the first Message or Term in `source`.
+        /// 
+        /// Skip all encountered comments and start parsing at the first Message or
+        /// Term start. Return Junk if the parsing is not successful.
+        /// 
+        /// Preceding comments are ignored unless they contain syntax errors
+        /// themselves, in which case Junk for the invalid comment is returned.
+        /// </summary>
         public Ast.Entry ParseEntry(TextReader source)
         {
             var ps = new FtlParserStream(source);
             ps.SkipBlankLines();
+
+            while (ps.CurrentIs('#'))
+            {
+                var skipped = GetEntryOrJunk(ps);
+                if (skipped is Ast.Junk)
+                {
+                    // Don't skip Junk comments.
+                    return skipped;
+                }
+                ps.SkipBlankLines();
+            }
+
             return GetEntryOrJunk(ps);
         }
 
@@ -107,7 +148,9 @@ namespace Fluent.Net
 
             try
             {
-                return GetEntry(ps);
+                var entry = GetEntry(ps);
+                ps.ExpectNewLine();
+                return entry;
             }
             catch (ParseException e)
             {
@@ -130,86 +173,26 @@ namespace Fluent.Net
 
         public Ast.Entry GetEntry(FtlParserStream ps)
         {
-            Ast.BaseComment comment = null;
-
-            if (ps.CurrentIs('/') || ps.CurrentIs('#'))
+            if (ps.CurrentIs('#'))
             {
-                comment = GetComment(ps);
-
-                // The Comment content doesn't include the trailing newline. Consume
-                // this newline here to be ready for the next entry.
-                if (ps.Current != Eof)
-                {
-                    ps.ExpectNewLine();
-                }
+                return GetComment(ps);
             }
 
-            if (ps.CurrentIs('['))
+            if (ps.CurrentIs('-'))
             {
-                var groupComment = GetGroupCommentFromSection(ps, comment);
-                if (comment != null && _withSpans)
-                {
-                    // The Group Comment should start where the section comment starts.
-                    groupComment.Span.Start = comment.Span.Start;
-                }
-                return groupComment;
+                return GetTerm(ps);
             }
 
-            if (ps.IsEntryIDStart() && (comment == null || comment is Ast.Comment))
+            if (ps.IsIdentifierStart())
             {
-                return GetMessage(ps, comment as Ast.Comment);
-            }
-
-            if (comment != null)
-            {
-                return comment;
+                return GetMessage(ps);
             }
 
             throw new ParseException("E0002");
         }
 
-        Ast.Comment GetZeroFourStyleComment(FtlParserStream ps)
-        {
-            ps.ExpectChar('/');
-            ps.ExpectChar('/');
-            ps.TakeCharIf(' ');
-
-            var content = new StringBuilder();
-
-            while (true)
-            {
-                int ch;
-                while ((ch = ps.TakeChar(x => x != '\r' && x != '\n')) != Eof)
-                {
-                    content.Append((char)ch);
-                }
-
-                if (ps.IsPeekNextLineZeroFourStyleComment())
-                {
-                    content.Append('\n');
-                    ps.SkipNewLine();
-                    ps.ExpectChar('/');
-                    ps.ExpectChar('/');
-                    ps.TakeCharIf(' ');
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            var comment = new Ast.Comment(content.ToString());
-            _lastCommentZeroFourSyntax = true;
-            return comment;
-        }
-
         public Ast.BaseComment _GetComment(FtlParserStream ps)
         {
-            if (ps.CurrentIs('/'))
-            {
-                return GetZeroFourStyleComment(ps);
-            }
-
             // 0 - comment
             // 1 - group comment
             // 2 - resource comment
@@ -267,72 +250,28 @@ namespace Fluent.Net
         public Ast.BaseComment GetComment(FtlParserStream ps) =>
             SpanWrapper(ps, _GetComment);
 
-        public Ast.GroupComment _GetGroupCommentFromSection(FtlParserStream ps, Ast.BaseComment comment)
+        Ast.Entry _GetMessage(FtlParserStream ps)
         {
-            ps.ExpectChar('[');
-            ps.ExpectChar('[');
+            var id = GetIdentifier(ps);
 
             ps.SkipInlineWs();
-
-            GetVariantName(ps);
-
-            ps.SkipInlineWs();
-
-            ps.ExpectChar(']');
-            ps.ExpectChar(']');
-
-            if (comment != null)
-            {
-                return new Ast.GroupComment(comment.Content);
-            }
-
-            // A Section without a comment is like an empty Group Comment. Semantically
-            // it ends the previous group and starts a new one.
-            return new Ast.GroupComment("");
-        }
-
-        public Ast.GroupComment GetGroupCommentFromSection(FtlParserStream ps, Ast.BaseComment comment) =>
-            SpanWrapper(ps, () => _GetGroupCommentFromSection(ps, comment));
-
-        Ast.Entry _GetMessage(FtlParserStream ps, Ast.Comment comment)
-        {
-            var id = GetEntryIdentifier(ps);
-
-            ps.SkipInlineWs();
+            ps.ExpectChar('=');
 
             Ast.Pattern pattern = null;
-            IReadOnlyList<Ast.Attribute> attrs= null;
-
-            // XXX Syntax 0.4 compatibility.
-            // XXX Replace with ps.ExpectChar('=').
-            if (ps.CurrentIs('='))
+            if (ps.IsPeekValueStart())
             {
-                ps.Next();
-
-                if (ps.IsPeekPatternStart())
-                {
-                    ps.SkipIndent();
-                    pattern = GetPattern(ps);
-                }
-                else
-                {
-                    ps.SkipInlineWs();
-                }
+                ps.SkipIndent();
+                pattern = GetPattern(ps);
+            }
+            else
+            {
+                ps.SkipInlineWs();
             }
 
-            if (id.Name.StartsWith("-") && pattern == null)
-            {
-                throw new ParseException("E0006", id.Name);
-            }
-
+            IReadOnlyList<Ast.Attribute> attrs = null;
             if (ps.IsPeekNextLineAttributeStart())
             {
                 attrs = GetAttributes(ps);
-            }
-
-            if (id.Name.StartsWith("-"))
-            {
-                return new Ast.Term(id, pattern, attrs, comment);
             }
 
             if (pattern == null && attrs == null)
@@ -340,11 +279,40 @@ namespace Fluent.Net
                 throw new ParseException("E0005", id.Name);
             }
 
-            return new Ast.Message(id, pattern, attrs, comment);
+            return new Ast.Message(id, pattern, attrs);
         }
 
-        Ast.Entry GetMessage(FtlParserStream ps, Ast.Comment comment) =>
-            SpanWrapper(ps, () => _GetMessage(ps, comment));
+        Ast.Entry GetMessage(FtlParserStream ps) =>
+            SpanWrapper(ps, () => _GetMessage(ps));
+
+        Ast.Entry _GetTerm(FtlParserStream ps)
+        {
+            var id = GetTermIdentifier(ps);
+
+            ps.SkipInlineWs();
+            ps.ExpectChar('=');
+
+            Ast.SyntaxNode value = null;
+            if (ps.IsPeekValueStart())
+            {
+                ps.SkipIndent();
+                value = GetValue(ps);
+            }
+            else
+            {
+                throw new ParseException("E0006", id.Name);
+            }
+
+            IReadOnlyList<Ast.Attribute> attrs = null;
+            if (ps.IsPeekNextLineAttributeStart())
+            {
+                attrs = GetAttributes(ps);
+            }
+            return new Ast.Term(id, value, attrs);
+        }
+
+        Ast.Entry GetTerm(FtlParserStream ps) =>
+            SpanWrapper(ps, _GetTerm);
 
         Ast.Attribute _GetAttribute(FtlParserStream ps)
         {
@@ -355,7 +323,7 @@ namespace Fluent.Net
             ps.SkipInlineWs();
             ps.ExpectChar('=');
 
-            if (ps.IsPeekPatternStart())
+            if (ps.IsPeekValueStart())
             {
                 ps.SkipIndent();
                 var value = GetPattern(ps);
@@ -386,15 +354,10 @@ namespace Fluent.Net
             return attrs;
         }
 
-        Ast.Identifier GetEntryIdentifier(FtlParserStream ps)
-        {
-            return GetIdentifier(ps, true);
-        }
-
-        Ast.Identifier _GetIdentifier(FtlParserStream ps, bool allowTerm = false)
+        Ast.Identifier _GetIdentifier(FtlParserStream ps)
         {
             var name = new StringBuilder();
-            name.Append((char)ps.TakeIDStart(allowTerm));
+            name.Append((char)ps.TakeIDStart());
 
             int ch;
             while ((ch = ps.TakeIDChar()) != Eof)
@@ -405,8 +368,18 @@ namespace Fluent.Net
             return new Ast.Identifier(name.ToString());
         }
 
-        Ast.Identifier GetIdentifier(FtlParserStream ps, bool allowTerm = false) =>
-            SpanWrapper(ps, () => _GetIdentifier(ps, allowTerm));
+        Ast.Identifier GetIdentifier(FtlParserStream ps) =>
+            SpanWrapper(ps, _GetIdentifier);
+
+        Ast.Identifier _GetTermIdentifier(FtlParserStream ps)
+        {
+            ps.ExpectChar('-');
+            var id = this.GetIdentifier(ps);
+            return new Ast.Identifier($"-{id.Name}");
+        }
+
+        Ast.Identifier GetTermIdentifier(FtlParserStream ps) =>
+            SpanWrapper(ps, _GetTermIdentifier);
 
         Ast.SyntaxNode GetVariantKey(FtlParserStream ps)
         {
@@ -446,10 +419,10 @@ namespace Fluent.Net
 
             ps.ExpectChar(']');
 
-            if (ps.IsPeekPatternStart())
+            if (ps.IsPeekValueStart())
             {
                 ps.SkipIndent();
-                var value = GetPattern(ps);
+                var value = GetValue(ps);
                 return new Ast.Variant(key, value, defaultIndex);
             }
 
@@ -493,8 +466,7 @@ namespace Fluent.Net
         Ast.VariantName _GetVariantName(FtlParserStream ps)
         {
             var name = new StringBuilder();
-
-            name.Append((char)ps.TakeIDStart(false));
+            name.Append((char)ps.TakeIDStart());
 
             while (true)
             {
@@ -509,7 +481,7 @@ namespace Fluent.Net
                 }
             }
 
-            return new Ast.VariantName(name.ToString().TrimEnd());
+            return new Ast.VariantName(TrimRight(name.ToString()));
         }
 
         Ast.VariantName GetVariantName(FtlParserStream ps) =>
@@ -533,7 +505,7 @@ namespace Fluent.Net
             return num.ToString();
         }
 
-        Ast.NumberExpression _GetNumber(FtlParserStream ps)
+        Ast.NumberLiteral _GetNumber(FtlParserStream ps)
         {
             var num = new StringBuilder();
 
@@ -552,11 +524,41 @@ namespace Fluent.Net
                 num.Append(GetDigits(ps));
             }
 
-            return new Ast.NumberExpression(num.ToString());
+            return new Ast.NumberLiteral(num.ToString());
         }
 
-        Ast.NumberExpression GetNumber(FtlParserStream ps) =>
+        Ast.NumberLiteral GetNumber(FtlParserStream ps) =>
             SpanWrapper(ps, _GetNumber);
+
+        Ast.SyntaxNode _GetValue(FtlParserStream ps)
+        {
+            if (ps.CurrentIs('{'))
+            {
+                ps.Peek();
+                ps.PeekInlineWs();
+                if (ps.IsPeekNextLineVariantStart())
+                {
+                    return GetVariantList(ps);
+                }
+            }
+            return GetPattern(ps);
+        }
+
+        Ast.SyntaxNode GetValue(FtlParserStream ps) =>
+            SpanWrapper(ps, _GetValue);
+
+        Ast.SyntaxNode _GetVariantList(FtlParserStream ps)
+        {
+            ps.ExpectChar('{');
+            ps.SkipInlineWs();
+            var variants = GetVariants(ps);
+            ps.ExpectIndent();
+            ps.ExpectChar('}');
+            return new Ast.VariantList(variants);
+        }
+
+        Ast.SyntaxNode GetVariantList(FtlParserStream ps) =>
+            SpanWrapper(ps, _GetVariantList);
 
         Ast.Pattern _GetPattern(FtlParserStream ps)
         {
@@ -568,7 +570,7 @@ namespace Fluent.Net
             {
                 // The end condition for GetPattern's while loop is a newline
                 // which is not followed by a valid pattern continuation.
-                if (ps.IsPeekNewLine() && !ps.IsPeekNextLinePatternStart())
+                if (ps.IsPeekNewLine() && !ps.IsPeekNextLineValue())
                 {
                     break;
                 }
@@ -583,6 +585,13 @@ namespace Fluent.Net
                     var element = GetTextElement(ps);
                     elements.Add(element);
                 }
+            }
+
+            // Trim trailing whitespace.
+            if (elements.Count > 0 &&
+                elements[elements.Count - 1] is Ast.TextElement te)
+            {
+                te.Value = TrimRight(te.Value);
             }
 
             return new Ast.Pattern(elements);
@@ -605,7 +614,7 @@ namespace Fluent.Net
 
                 if (ch == '\r' || ch == '\n')
                 {
-                    if (!ps.IsPeekNextLinePatternStart())
+                    if (!ps.IsPeekNextLineValue())
                     {
                         return new Ast.TextElement(buffer.ToString());
                     }
@@ -620,23 +629,13 @@ namespace Fluent.Net
 
                 if (ch == '\\')
                 {
-                    var ch2 = ps.Next();
-
-                    if (ch2 == '{' || ch2 == '"')
-                    {
-                        buffer.Append((char)ch2);
-                    }
-                    else
-                    {
-                        buffer.Append((char)ch).Append((char)ch2);
-                    }
-
-                }
-                else
-                {
-                    buffer.Append((char)ps.Current);
+                    ps.Next();
+                    GetEscapeSequence(ps,
+                        new int[] { '{', '\\' }, buffer);
+                    continue;
                 }
 
+                buffer.Append((char)ps.Current);
                 ps.Next();
             }
 
@@ -645,6 +644,44 @@ namespace Fluent.Net
 
         Ast.TextElement GetTextElement(FtlParserStream ps) =>
             SpanWrapper(ps, _GetTextElement);
+
+        void GetEscapeSequence(FtlParserStream ps, int[] specials,
+            StringBuilder buffer)
+        {
+            int next = ps.Current;
+            if (Array.IndexOf(specials, next) >= 0)
+            {
+                ps.Next();
+                buffer.Append('\\').Append((char)next);
+                return;
+            }
+
+            if (next == 'u')
+            {
+                ps.Next();
+
+                char[] sequence = new char[4];
+                for (int i = 0; i < 4; ++i)
+                {
+                    int ch = ps.TakeHexDigit();
+                    if (ch == Eof)
+                    {
+                        var msg = new String(sequence, 0, i);
+                        if (ps.Current != Eof)
+                        {
+                            msg += (char)ps.Current;
+                        }
+                        throw new ParseException("E0026", msg);
+                    }
+                    sequence[i] = (char)ch;
+                }
+                buffer.Append("\\u").Append(sequence);
+                return;
+            }
+
+            throw new ParseException("E0025",
+                next == Eof ? "" : ((char)next).ToString());
+        }
 
         Ast.Placeable _GetPlaceable(FtlParserStream ps)
         {
@@ -657,17 +694,8 @@ namespace Fluent.Net
         Ast.Placeable GetPlaceable(FtlParserStream ps) =>
             SpanWrapper(ps, _GetPlaceable);
 
-        Ast.Expression _GetExpression(FtlParserStream ps)
+        Ast.SyntaxNode _GetExpression(FtlParserStream ps)
         {
-            if (ps.IsPeekNextLineVariantStart())
-            {
-                var variants = GetVariants(ps);
-
-                ps.ExpectIndent();
-
-                return new Ast.SelectExpression(null, variants);
-            }
-
             ps.SkipInlineWs();
 
             var selector = GetSelectorExpression(ps);
@@ -690,7 +718,7 @@ namespace Fluent.Net
                 }
 
                 if (selector is Ast.AttributeExpression ae &&
-                    !ae.Id.Name.StartsWith("-"))
+                    ae.Ref is Ast.MessageReference)
                 {
                     throw new ParseException("E0018");
                 }
@@ -712,12 +740,18 @@ namespace Fluent.Net
                     throw new ParseException("E0011");
                 }
 
+                // VariantLists are only allowed in other VariantLists.
+                if (variants.Any(v => v.Value is Ast.VariantList))
+                {
+                    throw new ParseException("E0023");
+                }
+
                 ps.ExpectIndent();
 
                 return new Ast.SelectExpression(selector, variants);
             }
             else if (selector is Ast.AttributeExpression ae &&
-                     ae.Id.Name.StartsWith("-"))
+                     ae.Ref is Ast.TermReference)
             {
                 throw new ParseException("E0019");
             }
@@ -725,15 +759,20 @@ namespace Fluent.Net
             return selector;
         }
 
-        Ast.Expression GetExpression(FtlParserStream ps) =>
+        Ast.SyntaxNode GetExpression(FtlParserStream ps) =>
             SpanWrapper(ps, _GetExpression);
 
-        Ast.Expression _GetSelectorExpression(FtlParserStream ps)
+        Ast.SyntaxNode _GetSelectorExpression(FtlParserStream ps)
         {
+            if (ps.CurrentIs('{'))
+            {
+                return GetPlaceable(ps);
+            }
+
             var literal = GetLiteral(ps);
 
-            var messageReference = literal as Ast.MessageReference;
-            if (messageReference == null)
+            var mtReference = literal as Ast.MessageTermReference;
+            if (mtReference == null)
             {
                 return literal;
             }
@@ -745,12 +784,17 @@ namespace Fluent.Net
                 ps.Next();
 
                 var attr = GetIdentifier(ps);
-                return new Ast.AttributeExpression(messageReference.Id, attr);
+                return new Ast.AttributeExpression(mtReference, attr);
             }
 
             if (ch == '[')
             {
                 ps.Next();
+
+                if (mtReference is Ast.MessageReference)
+                {
+                    throw new ParseException("E0024");
+                }
 
                 var key = GetVariantKey(ps);
 
@@ -763,28 +807,28 @@ namespace Fluent.Net
             {
                 ps.Next();
 
-                var args = GetCallArgs(ps);
-
-                ps.ExpectChar(')');
-
-                if (!s_fnName.IsMatch(messageReference.Id.Name))
+                if (!s_fnName.IsMatch(mtReference.Id.Name))
                 {
                     throw new ParseException("E0008");
                 }
 
-                var func = new Ast.Function(messageReference.Id.Name);
+                var args = GetCallArgs(ps);
+
+                ps.ExpectChar(')');
+
+                var func = new Ast.Function(mtReference.Id.Name);
                 if (_withSpans)
                 {
-                    func.AddSpan(messageReference.Span.Start, messageReference.Span.End);
+                    func.AddSpan(mtReference.Span.Start, mtReference.Span.End);
                 }
 
-                return new Ast.CallExpression(func, args);
+                return new Ast.CallExpression(func, args.Positional, args.Named);
             }
 
             return literal;
         }
 
-        Ast.Expression GetSelectorExpression(FtlParserStream ps) =>
+        Ast.SyntaxNode GetSelectorExpression(FtlParserStream ps) =>
             SpanWrapper(ps, _GetSelectorExpression);
 
         Ast.SyntaxNode _GetCallArg(FtlParserStream ps)
@@ -814,11 +858,21 @@ namespace Fluent.Net
         Ast.SyntaxNode GetCallArg(FtlParserStream ps) =>
             SpanWrapper(ps, _GetCallArg);
 
-        IReadOnlyList<Ast.SyntaxNode> GetCallArgs(FtlParserStream ps)
+        class CallArgs
         {
-            var args = new List<Ast.SyntaxNode>();
+            public List<Ast.SyntaxNode> Positional { get; } =
+                new List<Ast.SyntaxNode>();
+            public List<Ast.NamedArgument> Named { get; } =
+                new List<Ast.NamedArgument>();
+        }
+
+        CallArgs GetCallArgs(FtlParserStream ps)
+        {
+            var result = new CallArgs();
+            var argumentNames = new HashSet<string>();
 
             ps.SkipInlineWs();
+            ps.SkipIndent();
 
             while (true)
             {
@@ -828,14 +882,32 @@ namespace Fluent.Net
                 }
 
                 var arg = GetCallArg(ps);
-                args.Add(arg);
+                if (arg is Ast.NamedArgument narg)
+                {
+                    if (argumentNames.Contains(narg.Name.Name))
+                    {
+                        throw new ParseException("E0022");
+                    }
+                    result.Named.Add(narg);
+                    argumentNames.Add(narg.Name.Name);
+                }
+                else if (argumentNames.Count > 0)
+                {
+                    throw new ParseException("E0021");
+                }
+                else
+                {
+                    result.Positional.Add(arg);
+                }
 
                 ps.SkipInlineWs();
+                ps.SkipIndent();
 
                 if (ps.Current == ',')
                 {
                     ps.Next();
                     ps.SkipInlineWs();
+                    ps.SkipIndent();
                     continue;
                 }
                 else
@@ -843,7 +915,7 @@ namespace Fluent.Net
                     break;
                 }
             }
-            return args;
+            return result;
         }
 
         Ast.Expression GetArgVal(FtlParserStream ps)
@@ -859,7 +931,7 @@ namespace Fluent.Net
             throw new ParseException("E0012");
         }
 
-        Ast.StringExpression _GetString(FtlParserStream ps)
+        Ast.StringLiteral _GetString(FtlParserStream ps)
         {
             var val = new StringBuilder();
 
@@ -868,7 +940,14 @@ namespace Fluent.Net
             int ch;
             while ((ch = ps.TakeChar(x => x != '"' && x != '\r' && x != '\n')) != Eof)
             {
-                val.Append((char)ch);
+                if (ch == '\\')
+                {
+                    GetEscapeSequence(ps, new int[] { '{', '\\', '"' }, val);
+                }
+                else
+                {
+                    val.Append((char)ch);
+                }
             }
 
             if (ps.CurrentIs('\r') || ps.CurrentIs('\n'))
@@ -878,10 +957,10 @@ namespace Fluent.Net
 
             ps.Next();
 
-            return new Ast.StringExpression(val.ToString());
+            return new Ast.StringLiteral(val.ToString());
         }
 
-        Ast.StringExpression GetString(FtlParserStream ps) =>
+        Ast.StringLiteral GetString(FtlParserStream ps) =>
             SpanWrapper(ps, _GetString);
 
         Ast.Expression _GetLiteral(FtlParserStream ps)
@@ -896,19 +975,25 @@ namespace Fluent.Net
             if (ch == '$')
             {
                 ps.Next();
-                var name = GetIdentifier(ps);
-                return new Ast.ExternalArgument(name);
+                var id = GetIdentifier(ps);
+                return new Ast.VariableReference(id);
             }
 
-            if (ps.IsEntryIDStart())
+            if (ps.IsIdentifierStart())
             {
-                var name = GetEntryIdentifier(ps);
+                var name = GetIdentifier(ps);
                 return new Ast.MessageReference(name);
             }
 
             if (ps.IsNumberStart())
             {
                 return GetNumber(ps);
+            }
+
+            if (ch == '-')
+            {
+                var id = GetTermIdentifier(ps);
+                return new Ast.TermReference(id);
             }
 
             if (ch == '"')

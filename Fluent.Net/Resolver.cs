@@ -6,6 +6,53 @@ using System.Text;
 
 namespace Fluent.Net
 {
+/**
+ * @overview
+ *
+ * The role of the Fluent resolver is to format a translation object to an
+ * instance of `FluentType` or an array of instances.
+ *
+ * Translations can contain references to other messages or variables,
+ * conditional logic in form of select expressions, traits which describe their
+ * grammatical features, and can use Fluent builtins which make use of the
+ * `Intl` formatters to format numbers, dates, lists and more into the
+ * context's language. See the documentation of the Fluent syntax for more
+ * information.
+ *
+ * In case of errors the resolver will try to salvage as much of the
+ * translation as possible.  In rare situations where the resolver didn't know
+ * how to recover from an error it will return an instance of `FluentNone`.
+ *
+ * `MessageReference`, `VariantExpression`, `AttributeExpression` and
+ * `SelectExpression` resolve to raw Runtime Entries objects and the result of
+ * the resolution needs to be passed into `Type` to get their real value.
+ * This is useful for composing expressions.  Consider:
+ *
+ *     brand-name[nominative]
+ *
+ * which is a `VariantExpression` with properties `id: MessageReference` and
+ * `key: Keyword`.  If `MessageReference` was resolved eagerly, it would
+ * instantly resolve to the value of the `brand-name` message.  Instead, we
+ * want to get the message object and look for its `nominative` variant.
+ *
+ * All other expressions (except for `FunctionReference` which is only used in
+ * `CallExpression`) resolve to an instance of `FluentType`.  The caller should
+ * use the `toString` method to convert the instance to a native value.
+ *
+ *
+ * All functions in this file pass around a special object called `env`.
+ * This object stores a set of elements used by all resolve functions:
+ *
+ *  * {MessageContext} ctx
+ *      context for which the given resolution is happening
+ *  * {Object} args
+ *      list of developer provided arguments that can be used
+ *  * {Array} errors
+ *      list of errors collected while resolving
+ *  * {WeakSet} dirty
+ *      Set of patterns already encountered during this resolution.
+ *      This is used to prevent cyclic resolutions.
+ */
     public static class Resolver
     {
         public delegate FluentType ExternalFunction(IList<object> args,
@@ -42,7 +89,7 @@ namespace Fluent.Net
         {
             // A fast-path for strings which are the most common case, and for
             // `FluentNone` which doesn't require any additional logic.
-            if (expr is StringExpression se)
+            if (expr is StringLiteral se)
             {
                 return new FluentString(env.Context.Transform(se.Value));
             }
@@ -63,13 +110,13 @@ namespace Fluent.Net
             {
                 return new FluentSymbol(varName.Name);
             }
-            if (expr is NumberExpression num)
+            if (expr is NumberLiteral num)
             {
                 return new FluentNumber(num.Value);
             }
-            if (expr is ExternalArgument arg)
+            if (expr is VariableReference arg)
             {
-                return ExternalArgument(env, arg);
+                return VariableReference(env, arg);
             }
             //                case "fun":
             //                    return FunctionReference(env, expr);
@@ -82,12 +129,12 @@ namespace Fluent.Net
                 var msgRef = MessageReference(env, ref_);
                 return ResolveNode(env, msgRef);
             }
-            if (expr is AttributeExpression attrExpr)
+            if (expr is GetAttribute attrExpr)
             {
                 var attr = AttributeExpression(env, attrExpr);
                 return ResolveNode(env, attr);
             }
-            if (expr is VariantExpression varExpr)
+            if (expr is GetVariant varExpr)
             {
                 var variant = VariantExpression(env, varExpr);
                 return ResolveNode(env, variant);
@@ -175,7 +222,7 @@ namespace Fluent.Net
          * @returns {FluentType}
          * @private
          */
-        static Node VariantExpression(ResolverEnvironment env, VariantExpression expr)
+        static Node VariantExpression(ResolverEnvironment env, GetVariant expr)
         {
             var message = MessageReference(env, expr.Id);
             if (message is FluentNone)
@@ -228,7 +275,7 @@ namespace Fluent.Net
          * @returns {FluentType}
          * @private
          */
-        static Node AttributeExpression(ResolverEnvironment env, AttributeExpression expr)
+        static Node AttributeExpression(ResolverEnvironment env, GetAttribute expr)
         {
             var message = MessageReference(env, expr.Id);
             if (message is FluentNone)
@@ -302,7 +349,7 @@ namespace Fluent.Net
         }
 
         /**
-         * Resolve a reference to an external argument.
+         * Resolve a reference to a variable
          *
          * @param   {Object} env
          *    Resolver environment object.
@@ -313,14 +360,14 @@ namespace Fluent.Net
          * @returns {FluentType}
          * @private
          */
-        static IFluentType ExternalArgument(ResolverEnvironment env, ExternalArgument externalArg)
+        static IFluentType VariableReference(ResolverEnvironment env, VariableReference varReference)
         {
             object arg;
             if (env.Arguments == null ||
-                !env.Arguments.TryGetValue(externalArg.Name, out arg))
+                !env.Arguments.TryGetValue(varReference.Name, out arg))
             {
-                env.Errors.Add(new ReferenceError($"Unknown external: ${externalArg.Name}"));
-                return new FluentNone(externalArg.Name);
+                env.Errors.Add(new ReferenceError($"Unknown variable: ${varReference.Name}"));
+                return new FluentNone(varReference.Name);
             }
 
             // Return early if the argument already is an instance of IFluentType.
@@ -346,8 +393,8 @@ namespace Fluent.Net
             }
 
             env.Errors.Add(new TypeError(
-                $"Unsupported external type: {externalArg.Name}, {arg?.GetType()?.ToString() ?? "null"}"));
-            return new FluentNone(externalArg.Name);
+                $"Unsupported variable type: {varReference.Name}, {arg?.GetType()?.ToString() ?? "null"}"));
+            return new FluentNone(varReference.Name);
         }
 
         /**
@@ -430,7 +477,7 @@ namespace Fluent.Net
 
             foreach (var elem in pattern.Elements)
             {
-                if (elem is StringExpression sexp)
+                if (elem is StringLiteral sexp)
                 {
                     result.Append(env.Context.Transform(sexp.Value));
                     continue;

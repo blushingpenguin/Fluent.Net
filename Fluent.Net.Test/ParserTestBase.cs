@@ -21,7 +21,7 @@ namespace Fluent.Net.Test
             }
         }
 
-        static readonly Regex s_reDirective = new Regex("^//~ (.*)[\n$]",
+        static readonly Regex s_reDirective = new Regex("^# ~(.*)[\n$]",
             RegexOptions.Compiled | RegexOptions.Multiline);
 
         class FtlWithDirectives
@@ -59,10 +59,6 @@ namespace Fluent.Net.Test
             {
                 case 'E':
                     return $"ERROR {code}";
-                case 'W':
-                    return $"WARNING ${code}";
-                case 'H':
-                    return $"HINT ${code}";
                 default:
                     throw new InvalidOperationException($"Unknown Annotation code {code}");
             }

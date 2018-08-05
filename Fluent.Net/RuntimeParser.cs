@@ -1,4 +1,5 @@
 ﻿using Fluent.Net.RuntimeAst;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -71,7 +72,7 @@ namespace Fluent.Net
                 catch (ParseException e)
                 {
                     errors.Add(e);
-                    _stream.SkipToNextEntryStart();
+                    _stream.SkipToNextEntryStart(true);
                 }
                 SkipWs();
             }
@@ -100,44 +101,14 @@ namespace Fluent.Net
             // We don't care about comments or sections at runtime
             int ch = Current;
             int ch2 = Peek();
-            if (ch == '/' ||
-                (ch == '#' && (ch2 == '#' || ch2 == ' ' ||
-                               ch2 == '\r' || ch2 == '\n')))
+            if (ch == '#' && (ch2 == '#' || ch2 == ' ' ||
+                              ch2 == '\r' || ch2 == '\n'))
             {
                 SkipComment();
                 return;
             }
 
-            if (ch == '[')
-            {
-                SkipSection();
-                return;
-            }
-
             GetMessage();
-        }
-
-        /// <summary>
-        /// Skip the section entry from the current index.
-        /// </summary>
-        void SkipSection()
-        {
-            if (Next() != '[')
-            {
-                Error("Expected '[[' to open a section");
-            }
-            Next();
-
-            SkipInlineWs();
-            GetVariantName();
-            SkipInlineWs();
-
-            if (Current != ']' || Peek() != ']')
-            {
-                Error("Expected ']]' to close a section");
-            }
-            Next();
-            Next();
         }
 
         /// <summary>
@@ -153,6 +124,10 @@ namespace Fluent.Net
             if (Current == '=')
             {
                 Next();
+            }
+            else
+            {
+                Error("Expected \"=\" after the identifier");
             }
 
             SkipInlineWs();
@@ -211,7 +186,15 @@ namespace Fluent.Net
         string GetIdentifier(bool allowTerm = false)
         {
             var name = new StringBuilder();
-            name.Append((char)_stream.TakeIDStart(allowTerm));
+            if (allowTerm && Current == '-')
+            {
+                name.Append('-');
+                Next();
+            }
+            else
+            {
+                name.Append((char)_stream.TakeIDStart());
+            }
 
             int ch;
             while ((ch = _stream.TakeIDChar()) != Eof)
@@ -309,11 +292,27 @@ namespace Fluent.Net
                 {
                     Error("Unterminated string expression");
                 }
-                result.Append((char)Current);
-                Next();
+                if (Current == '\\')
+                {
+                    GetEscapedCharacter(result, new int[] { '{', '\\', '"' });
+                }
+                else
+                {
+                    result.Append((char)Current);
+                    Next();
+                }
             }
 
-            return new StringExpression() { Value = result.ToString() };
+            return new StringLiteral() { Value = result.ToString() };
+        }
+
+        static StringLiteral StringLiteralFromBuffer(StringBuilder buf)
+        {
+            return buf.Length > 0 ?
+                new StringLiteral()
+                {
+                    Value = Parser.TrimRight(buf.ToString())
+                } : null;
         }
 
         /// <summary>
@@ -330,12 +329,13 @@ namespace Fluent.Net
             // next line starts an indentation, we switch to complex pattern.
             var firstLineContent = new StringBuilder();
             for (; CurrentPeek != '\r' && CurrentPeek != '\n' &&
-                   CurrentPeek != '{'  && CurrentPeek != Eof; _stream.Peek())
+                   CurrentPeek != '\\' && CurrentPeek != '{'  &&
+                   CurrentPeek != Eof; _stream.Peek())
             {
                 firstLineContent.Append((char)CurrentPeek);
             }
 
-            if (CurrentPeek == '{')
+            if (CurrentPeek == '{' || CurrentPeek == '\\')
             {
                 _stream.ResetPeek();
                 return GetComplexPattern();
@@ -348,9 +348,7 @@ namespace Fluent.Net
                 // if the return value here is null. It may be OK for messages, but not OK
                 // for terms, attributes and variants.
                 _stream.SkipToPeek(); // consume the line
-                return firstLineContent.Length > 0 ?
-                    new StringExpression() { Value = firstLineContent.ToString() } :
-                    null;
+                return StringLiteralFromBuffer(firstLineContent);
             }
 
             int lineStart = _stream.GetPeekIndex();
@@ -361,9 +359,7 @@ namespace Fluent.Net
                 // column of the current line as expected by GetAttributes.
                 _stream.ResetPeek(lineStart);
                 _stream.SkipToPeek();
-                return firstLineContent.Length > 0 ?
-                    new StringExpression() { Value = firstLineContent.ToString() } :
-                    null;
+                return StringLiteralFromBuffer(firstLineContent);
             }
 
             // It's a multiline pattern which started on the same line as the
@@ -436,21 +432,17 @@ namespace Fluent.Net
                     continue;
                 }
                 // check if it's a valid escaped thing
-                else if (Current == '\\') 
+                if (Current == '\\') 
                 {
-                    int ch2 = Peek();
-                    if (ch2 == '\'' || ch2 == '{' || ch2 == '\\')
-                    {
-                        buffer.Append((char)ch2);
-                        Next();
-                    }
+                    GetEscapedCharacter(buffer, new int[] { '{', '\\' });
+                    continue;
                 }
-                else if (Current == '{')
+                if (Current == '{')
                 {
                     // Push the buffer to content array right before placeable
                     if (buffer.Length > 0)
                     {
-                        content.Add(new StringExpression() { Value = buffer.ToString() });
+                        content.Add(new StringLiteral() { Value = buffer.ToString() });
                     }
                     if (placeables > MAX_PLACEABLES - 1)
                     {
@@ -469,10 +461,13 @@ namespace Fluent.Net
                 Next();
             }
 
-            StringExpression extra = null;
+            StringLiteral extra = null;
             if (buffer.Length > 0)
             {
-                extra = new StringExpression() { Value = buffer.ToString() };
+                extra = new StringLiteral()
+                { 
+                    Value = Parser.TrimRight(buffer.ToString()) 
+                };
             }
             if (content.Count == 0)
             {
@@ -483,6 +478,72 @@ namespace Fluent.Net
                 content.Add(extra);
             }
             return new Pattern() { Elements = content };
+        }
+
+        bool TryParseHex(string s, out int val)
+        {
+            val = 0;
+            if (s == null || s.Length == 0)
+            {
+                return false;
+            }
+            for (int i = 0; i < s.Length; ++i)
+            {
+                char c = s[i];
+                int digit = (c >= 'A' && c <= 'F') ? c - 'A' :
+                            (c >= 'a' && c <= 'f') ? c - 'a' :
+                            (c >= '0' && c <= '9') ? c - '0' : -1;
+                if (digit < 0 || // not hex
+                    val > Int32.MaxValue / 16 || // overflow
+                    (val == Int32.MaxValue / 16 && // boundary overflow
+                     digit > (Int32.MaxValue - 16 * (Int32.MaxValue / 16))))
+                {
+                    return false;
+                }
+                val = val * 16 + digit;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Parse an escape sequence and return the unescaped character.
+        /// </summary>
+        void GetEscapedCharacter(StringBuilder buffer, int[] specials)
+        {
+            int ch = Next();
+
+            if (Array.IndexOf(specials, ch) >= 0)
+            {
+                Next();
+                buffer.Append((char)ch);
+                return;
+            }
+        
+            if (ch == 'u')
+            {
+                Next();
+                char[] sequence = new char[4];
+                int i = 0;
+                for (; i < 4; ++i)
+                {
+                    ch = _stream.TakeHexDigit();
+                    if (ch == Eof)
+                    {
+                        break;
+                    }
+                    sequence[i] = (char)ch;
+                }
+                var charCodeString = new String(sequence, 0, i);
+                int charCodeVal;
+                if (i != 4 || !TryParseHex(charCodeString, out charCodeVal))
+                {
+                    throw Error($"Invalid Unicode escape sequence: \\u{charCodeString}");
+                }
+                buffer.Append(Char.ConvertFromUtf32(charCodeVal));
+                return;
+            }
+
+            Error($"Unknown escape sequence: \\{CurrentAsString()}");
         }
 
         /// <summary>
@@ -517,7 +578,7 @@ namespace Fluent.Net
 
             if (Current == '}')
             {
-                if (selector is AttributeExpression ae2 && ae2.Id.Name.StartsWith("-"))
+                if (selector is GetAttribute ae2 && ae2.Id.Name.StartsWith("-"))
                 {
                     Error(
                         "Attributes of private messages cannot be interpolated.");
@@ -536,12 +597,12 @@ namespace Fluent.Net
                 Error("Message references cannot be used as selectors.");
             }
 
-            if (selector is VariantExpression)
+            if (selector is GetVariant)
             {
                 Error("Variants cannot be used as selectors.");
             }
 
-            if (selector is AttributeExpression ae && !ae.Id.Name.StartsWith("-"))
+            if (selector is GetAttribute ae && !ae.Id.Name.StartsWith("-"))
             {
                 Error(
                     "Attributes of public messages cannot be used as selectors."
@@ -579,6 +640,11 @@ namespace Fluent.Net
         /// </summary>
         Node GetSelectorExpression()
         {
+            if (Current == '{')
+            {
+                return GetPlaceable();
+            }
+
             Node literal = GetLiteral();
             if (!(literal is MessageReference))
             {
@@ -591,7 +657,7 @@ namespace Fluent.Net
                 Next();
                 var name = GetIdentifier();
                 Next();
-                return new AttributeExpression() 
+                return new GetAttribute() 
                 {
                     Id = messageReference,
                     Name = name 
@@ -603,7 +669,7 @@ namespace Fluent.Net
                 Next();
                 var key = GetVariantKey();
                 Next();
-                return new VariantExpression() { Id = messageReference, Key = key };
+                return new GetVariant() { Id = messageReference, Key = key };
             }
 
             if (Current == '(')
@@ -632,7 +698,7 @@ namespace Fluent.Net
 
             for (; ;)
             {
-                _stream.SkipInlineWs();
+                SkipWs();
 
                 if (Current == ')')
                 {
@@ -654,7 +720,7 @@ namespace Fluent.Net
                     if (Current == ':')
                     {
                         Next();
-                        SkipInlineWs();
+                        SkipWs();
 
                         var val = GetSelectorExpression();
 
@@ -663,8 +729,8 @@ namespace Fluent.Net
                         //
                         // We don't have to check here if the pattern is quote delimited
                         // because that's the only type of string allowed in expressions.
-                        if (val is StringExpression ||
-                            val is NumberExpression ||
+                        if (val is StringLiteral ||
+                            val is NumberLiteral ||
                             val is Pattern)
                         {
                             args.Add(new NamedArgument()
@@ -688,6 +754,8 @@ namespace Fluent.Net
                         args.Add(exp);
                     }
                 }
+
+                SkipWs();
 
                 if (Current == ')')
                 {
@@ -754,7 +822,7 @@ namespace Fluent.Net
                 }
             }
 
-            return new NumberExpression() { Value = num.ToString() };
+            return new NumberLiteral() { Value = num.ToString() };
         }
 
         /// <summary>
@@ -887,16 +955,22 @@ namespace Fluent.Net
             {
                 Next();
                 var name = GetIdentifier();
-                return new ExternalArgument() { Name = name };
+                return new VariableReference() { Name = name };
             }
 
-            if (_stream.IsEntryIDStart())
+            int ch = Current;
+            if (ch == '-')
+            {
+                ch = Peek();
+            }
+
+            if (FtlParserStream.IsCharIDStart(ch))
             {
                 string name = GetEntryIdentifier();
                 return new MessageReference { Name = name };
             }
 
-            if (_stream.IsNumberStart())
+            if (FtlParserStream.IsDigit(ch))
             {
                 return GetNumber();
             }
@@ -907,7 +981,7 @@ namespace Fluent.Net
             }
 
             // the compiler can't see that Error always throws
-            throw new ParseException("Expected literal");
+            throw Error("Expected literal");
         }
 
         /// <summary>
@@ -924,8 +998,7 @@ namespace Fluent.Net
                     _stream.SkipNewLine();
 
                     int next = Peek();
-                    if ((Current == '/' && next == '/') ||
-                        (Current == '#' && (next == ' ' || next == '#')))
+                    if (Current == '#' && (next == ' ' || next == '#'))
                     {
                         Next();
                         Next();
@@ -946,7 +1019,7 @@ namespace Fluent.Net
         /// Throws a ParseException with a given message.
         /// </summary>
         /// <param name="message">The error message</param>
-        static void Error(string message)
+        static Exception Error(string message)
         {
             throw new ParseException(message);
         }

@@ -51,7 +51,7 @@ namespace Fluent.Net.Test
                    *[Foo] Member 1
                 }
 
-                bar
+                bar = Bar
                     .attr = Bar Attribute
 
                 placeable-attr   = { bar.attr }
@@ -81,7 +81,7 @@ namespace Fluent.Net.Test
         {
             var ctx = CreateStringValueContext();
             var msg = ctx.GetMessage("foo");
-            msg.Value.Should().BeOfType<RuntimeAst.StringExpression>();
+            msg.Value.Should().BeOfType<RuntimeAst.StringLiteral>();
         }
 
         [Test]
@@ -158,7 +158,7 @@ namespace Fluent.Net.Test
 
                 placeable-message = { bar } Baz
 
-                baz
+                baz = Baz
                     .attr = { bar } Baz Attribute
 
                 -baz = Baz

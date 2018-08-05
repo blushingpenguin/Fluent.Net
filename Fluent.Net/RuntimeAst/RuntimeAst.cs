@@ -6,17 +6,17 @@ namespace Fluent.Net.RuntimeAst
     {
     }
 
-    public class ExternalArgument : Node
+    public class VariableReference : Node
     {
         public string Name { get; set; }
     }
 
-    public class StringExpression : Node
+    public class StringLiteral : Node
     {
         public string Value { get; set; }
     }
 
-    public class NumberExpression : Node
+    public class NumberLiteral : Node
     {
         public string Value { get; set; }
     }
@@ -37,7 +37,7 @@ namespace Fluent.Net.RuntimeAst
         public Node Value { get; set; }
     }
 
-    public class VariantExpression : Node
+    public class GetVariant : Node
     {
         public MessageReference Id { get; set; }
         public Node Key { get; set; }
@@ -50,7 +50,7 @@ namespace Fluent.Net.RuntimeAst
         public int? DefaultIndex { get; set; }
     }
 
-    public class AttributeExpression : Node
+    public class GetAttribute : Node
     {
         public MessageReference Id { get; set; }
         public string Name { get; set; }

@@ -137,6 +137,7 @@ namespace Fluent.Net.Test.LangNeg
                             },
                             new NegotiateTestCase()
                             {
+                                Name = "en (2)",
                                 RequestedLocales = Strings("en"),
                                 AvailableLocales = Strings("en-Latn-GB", "de", "en-Latn-US"),
                                 Expected = Strings("en-Latn-US", "en-Latn-GB")
@@ -179,6 +180,7 @@ namespace Fluent.Net.Test.LangNeg
                             },
                             new NegotiateTestCase()
                             {
+                                Name = "sr-RU (2)",
                                 RequestedLocales = Strings("sr-RU"),
                                 AvailableLocales = Strings("sr-Latn-RO", "sr-Cyrl"),
                                 Expected = Strings("sr-Latn-RO"),
@@ -330,6 +332,7 @@ namespace Fluent.Net.Test.LangNeg
                             },
                             new NegotiateTestCase()
                             {
+                                Name = "fr (2)",
                                 RequestedLocales = Strings("fr"),
                                 AvailableLocales = Strings("de", "it"),
                                 DefaultLocale = "en-US",
@@ -337,6 +340,7 @@ namespace Fluent.Net.Test.LangNeg
                             },
                             new NegotiateTestCase()
                             {
+                                Name = "fr (3)",
                                 RequestedLocales = Strings("fr"),
                                 AvailableLocales = Strings("de", "en-US"),
                                 DefaultLocale = "en-US",
@@ -393,6 +397,7 @@ namespace Fluent.Net.Test.LangNeg
                             },
                             new NegotiateTestCase()
                             {
+                                Name = "fr_FR (2)",
                                 RequestedLocales = Strings("fr_FR"),
                                 AvailableLocales = Strings("fr_FR"),
                                 Expected = Strings("fr_FR"),
