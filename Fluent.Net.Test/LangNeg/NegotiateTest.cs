@@ -514,7 +514,8 @@ namespace Fluent.Net.Test.LangNeg
         {
             var actual = Negotiate.NegotiateLanguages(test.RequestedLocales,
                 test.AvailableLocales, test.Strategy, test.DefaultLocale);
-            actual.Should().BeEquivalentTo(test.Expected);
+            actual.Should().BeEquivalentTo(test.Expected,
+                options => options.WithStrictOrdering());
         }
     }
 }

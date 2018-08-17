@@ -84,13 +84,13 @@ namespace Fluent.Net.LangNeg
         ///    ignoring script ranges. That means that `sr-Cyrl` will never match
         ///    against `sr-Latn`.
         /// </summary>
-        static SortedSet<string> FilterMatches(
+        static OrderedSet<string> FilterMatches(
             string[] requestedLocales,
             string[] availableLocales,
             Strategy strategy
         )
         {
-            var supportedLocales = new SortedSet<string>();
+            var supportedLocales = new OrderedSet<string>();
             var availLocales = availableLocales.Select(l => new Locale(l, true)).ToList();
 
             foreach (var reqLocStr in requestedLocales)
