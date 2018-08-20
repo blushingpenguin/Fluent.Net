@@ -13,6 +13,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitignore = .gitignore
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluent.Net.SyntaxTest", "Fluent.Net.SyntaxTest\Fluent.Net.SyntaxTest.csproj", "{F0CFAA41-FC32-4579-A7CD-A0A20723352C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluent.Net.SyntaxTest.Test", "Fluent.Net.SyntaxTest.Test\Fluent.Net.SyntaxTest.Test.csproj", "{91637454-B5D4-4C31-966E-8F257F891D5C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{D028E809-62B8-4F89-84B8-BC2955B09C7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D028E809-62B8-4F89-84B8-BC2955B09C7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D028E809-62B8-4F89-84B8-BC2955B09C7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F0CFAA41-FC32-4579-A7CD-A0A20723352C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0CFAA41-FC32-4579-A7CD-A0A20723352C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0CFAA41-FC32-4579-A7CD-A0A20723352C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0CFAA41-FC32-4579-A7CD-A0A20723352C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91637454-B5D4-4C31-966E-8F257F891D5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91637454-B5D4-4C31-966E-8F257F891D5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91637454-B5D4-4C31-966E-8F257F891D5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91637454-B5D4-4C31-966E-8F257F891D5C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

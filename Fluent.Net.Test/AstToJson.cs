@@ -271,8 +271,8 @@ namespace Fluent.Net.Test
         {
             var obj = new JObject();
             obj["type"] = "Span";
-            obj["start"] = span.Start;
-            obj["end"] = span.End;
+            obj["start"] = span.Start.Offset;
+            obj["end"] = span.End.Offset;
             return obj;
         }
 

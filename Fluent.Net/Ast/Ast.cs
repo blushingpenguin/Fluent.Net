@@ -20,7 +20,7 @@ namespace Fluent.Net.Ast
     {
         public Span Span { get; set; }
 
-        internal void AddSpan(int start, int end)
+        internal void AddSpan(Position start, Position end)
         {
             Span = new Span(start, end);
         }
@@ -467,14 +467,14 @@ namespace Fluent.Net.Ast
 
     public class Span : BaseNode
     {
-        public int Start { get; set; }
-        public int End { get; set; }
+        public Position Start { get; set; }
+        public Position End { get; set; }
 
         public Span()
         {
         }
 
-        public Span(int start, int end)
+        public Span(Position start, Position end)
         {
             Start = start;
             End = end;

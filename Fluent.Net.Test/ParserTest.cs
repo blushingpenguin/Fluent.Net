@@ -35,19 +35,27 @@ namespace Fluent.Net.Test
                 Id = new Ast.Identifier()
                 {
                     Name = "foo",
-                    Span = new Ast.Span(0, 3)
+                    Span = new Ast.Span(
+                        new Position(0, 1, 1),
+                        new Position(3, 1, 4))
                 },
-                Span = new Ast.Span(0, 9),
+                Span = new Ast.Span(
+                    new Position(0, 1, 1),
+                    new Position(9, 1, 10)),
                 Value = new Ast.Pattern()
                 {
                     Elements = new Ast.SyntaxNode[] {
                         new Ast.TextElement()
                         {
                             Value = "Foo",
-                            Span = new Ast.Span(6, 9)
+                            Span = new Ast.Span(
+                                new Position(6, 1, 7),
+                                new Position(9, 1, 10))
                         }
                     },
-                    Span = new Ast.Span(6, 9)
+                    Span = new Ast.Span(
+                        new Position(6, 1, 7),
+                        new Position(9, 1, 10))
                 },
             };
             ParseAndCheck(ftl, output, true);
@@ -93,7 +101,7 @@ namespace Fluent.Net.Test
                     Args = new string[] { "=" },
                     Code = "E0003",
                     Message = "Expected token: \"=\"",
-                    Span = new Ast.Span(23, 23)
+                    Span = Span(23, 23)
                 }
             );
             ParseAndCheck(ftl, output);
@@ -140,7 +148,9 @@ namespace Fluent.Net.Test
                 Args = new string[] { " " },
                 Code = "E0003",
                 Message = "Expected token: \" \"",
-                Span = new Ast.Span(21, 21)
+                Span = new Ast.Span(
+                    new Position(21, 2, 3),
+                    new Position(21, 2, 3))
             });
             ParseAndCheck(ftl, output);
         }
@@ -152,14 +162,18 @@ namespace Fluent.Net.Test
             var output = new Ast.Junk()
             {
                 Content = "foo = ",
-                Span = new Ast.Span(0, 6),
+                Span = new Ast.Span(
+                    new Position(0, 1, 1),
+                    new Position(6, 1, 7))
             };
             output.AddAnnotation(new Ast.Annotation()
             {
                 Code = "E0005",
                 Message = "Expected message \"foo\" to have a value or attributes",
                 Args = new string[] { "foo" },
-                Span = new Ast.Span(6, 6)
+                Span = new Ast.Span(
+                    new Position(6, 1, 7),
+                    new Position(6, 1, 7))
             });
 
             using (var sr = new StringReader(ftl))
@@ -187,7 +201,9 @@ namespace Fluent.Net.Test
                         Id = new Ast.Identifier()
                         {
                             Name = "bar",
-                            Span = new Ast.Span(16, 19)
+                            Span = new Ast.Span(
+                                new Position(16, 2, 6),
+                                new Position(19, 2, 9))
                         },
                         Value = new Ast.Pattern()
                         {
@@ -195,23 +211,27 @@ namespace Fluent.Net.Test
                             {
                                 new Ast.StringLiteral() 
                                 { 
-                                    Span = new Ast.Span(22, 26),
+                                    Span = new Ast.Span(
+                                        new Position(22, 2, 12),
+                                        new Position(26, 2, 16)),
                                     Value = "attr" 
                                 },
                             },
-                            Span = new Ast.Span(22, 26)
+                            Span = new Ast.Span(
+                                new Position(22, 2, 12),
+                                new Position(26, 2, 16)),
                         },
-                        Span = new Ast.Span(15, 26)
+                        Span = new Ast.Span(
+                            new Position(15, 2, 5),
+                            new Position(26, 2, 16)),
                     }
                 },
                 Id = new Ast.Identifier()
                 {
                     Name = "-Foo",
-                    Span = new Ast.Span()
-                    {
-                        Start = 0,
-                        End = 4
-                    }
+                    Span = new Ast.Span(
+                            new Position(0, 1, 1),
+                            new Position(4, 1, 5)),
                 },
                 Value = new Ast.Pattern()
                 {
@@ -219,13 +239,19 @@ namespace Fluent.Net.Test
                     {
                         new Ast.StringLiteral() 
                         { 
-                            Span = new Ast.Span(7, 10),
+                            Span = new Ast.Span(
+                                new Position(7, 1, 8),
+                                new Position(10, 1, 11)),
                             Value = "foo"
                         }
                     },
-                    Span = new Ast.Span(7, 10)
+                    Span = new Ast.Span(
+                        new Position(7, 1, 8),
+                        new Position(10, 1, 11))
                 },
-                Span = new Ast.Span(0, 26)
+                Span = new Ast.Span(
+                    new Position(0, 1, 1),
+                    new Position(26, 2, 16))
             };
             using (var sr = new StringReader(Ftl(ftl)))
             {
@@ -250,67 +276,95 @@ namespace Fluent.Net.Test
             ";
             var output = new Ast.Resource()
             {
-                Span = new Ast.Span(0, 97),
+                Span = new Ast.Span(
+                    new Position(0, 1, 1),
+                    new Position(97, 8, 1)),
                 Body = new List<Ast.Entry>()
                 {
                     new Ast.Comment()
                     {
-                        Span = new Ast.Span(0, 9),
+                        Span = new Ast.Span(
+                            new Position(0, 1, 1),
+                            new Position(9, 1, 10)),
                         Content = "Comment"
                     },
                     new Ast.GroupComment()
                     {
-                        Span = new Ast.Span(10, 26),
+                        Span = new Ast.Span(
+                            new Position(10, 2, 1),
+                            new Position(26, 2, 17)),
                         Content = "Group comment"
                     },
                     new Ast.ResourceComment()
                     {
-                        Span = new Ast.Span(27, 47),
+                        Span = new Ast.Span(
+                            new Position(27, 3, 1),
+                            new Position(47, 3, 21)),
                         Content = "Resource comment"
                     },
                     new Ast.Message()
                     {
                         Id = new Ast.Identifier()
                         {
-                            Span = new Ast.Span(48, 51),
+                            Span = new Ast.Span(
+                                new Position(48, 4, 1),
+                                new Position(51, 4, 4)),
                             Name = "foo"
                         },
-                        Span = new Ast.Span(48, 96),
+                        Span = new Ast.Span(
+                            new Position(48, 4, 1),
+                            new Position(96, 7, 6)),
                         Value = new Ast.Pattern()
                         {
-                            Span = new Ast.Span(54, 96),
+                            Span = new Ast.Span(
+                                new Position(54, 4, 7),
+                                new Position(96, 7, 6)),
                             Elements = new List<Ast.SyntaxNode>()
                             {
                                 new Ast.Placeable()
                                 {
-                                    Span = new Ast.Span(54, 96),
+                                    Span = new Ast.Span(
+                                        new Position(54, 4, 7),
+                                        new Position(96, 7, 6)),
                                     Expression = new Ast.SelectExpression()
                                     {
-                                        Span = new Ast.Span(55, 95),
+                                        Span = new Ast.Span(
+                                            new Position(55, 4, 8),
+                                            new Position(95, 7, 5)),
                                         Selector = new Ast.NumberLiteral()
                                         {
-                                            Span = new Ast.Span(56, 57),
+                                            Span = new Ast.Span(
+                                                new Position(56, 4, 9),
+                                                new Position(57, 4, 10)),
                                             Value = "1"
                                         },
                                         Variants = new List<Ast.Variant>()
                                         {
                                             new Ast.Variant()
                                             {
-                                                Span = new Ast.Span(65, 75),
+                                                Span = new Ast.Span(
+                                                    new Position(65, 5, 5),
+                                                    new Position(75, 5, 15)),
                                                 IsDefault = true,
                                                 Key = new Ast.VariantName()
                                                 {
-                                                    Span = new Ast.Span(67, 70),
+                                                    Span = new Ast.Span(
+                                                        new Position(67, 5, 7),
+                                                        new Position(70, 5, 10)),
                                                     Name = "one"
                                                 },
                                                 Value = new Ast.Pattern()
                                                 {
-                                                    Span = new Ast.Span(72, 75),
+                                                    Span = new Ast.Span(
+                                                        new Position(72, 5, 12),
+                                                        new Position(75, 5, 15)),
                                                     Elements = new List<Ast.SyntaxNode>()
                                                     {
                                                         new Ast.TextElement()
                                                         {
-                                                            Span = new Ast.Span(72, 75),
+                                                            Span = new Ast.Span(
+                                                                new Position(72, 5, 12),
+                                                                new Position(75, 5, 15)),
                                                             Value = "One",
                                                         }
                                                     }
@@ -318,21 +372,29 @@ namespace Fluent.Net.Test
                                             },
                                             new Ast.Variant()
                                             {
-                                                Span = new Ast.Span(81, 90),
+                                                Span = new Ast.Span(
+                                                    new Position(81, 6, 6),
+                                                    new Position(90, 6, 15)),
                                                 IsDefault = false,
                                                 Key = new Ast.VariantName()
                                                 {
-                                                    Span = new Ast.Span(82, 85),
+                                                    Span = new Ast.Span(
+                                                        new Position(82, 6, 7),
+                                                        new Position(85, 6, 10)),
                                                     Name = "two"
                                                 },
                                                 Value = new Ast.Pattern()
                                                 {
-                                                    Span = new Ast.Span(87, 90),
+                                                    Span = new Ast.Span(
+                                                        new Position(87, 6, 12),
+                                                        new Position(90, 6, 15)),
                                                     Elements = new List<Ast.SyntaxNode>()
                                                     {
                                                         new Ast.TextElement()
                                                         {
-                                                            Span = new Ast.Span(87, 90),
+                                                            Span = new Ast.Span(
+                                                                new Position(87, 6, 12),
+                                                                new Position(90, 6, 15)),
                                                             Value = "Two",
                                                         }
                                                     }
@@ -351,7 +413,7 @@ namespace Fluent.Net.Test
             {
                 var ps = new Parser(true);
                 var message = ps.Parse(sr);
-                Console.WriteLine(AstToJson.ToJson(message));
+                // Console.WriteLine(AstToJson.ToJson(message));
                 message.Should().BeEquivalentTo(output, options =>
                     options.RespectingRuntimeTypes());
             }

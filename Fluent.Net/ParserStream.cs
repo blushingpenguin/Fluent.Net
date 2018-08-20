@@ -5,12 +5,82 @@ using System.Text;
 
 namespace Fluent.Net
 {
+    public struct Position
+    {
+        /// <summary>
+        /// Offset from the start of the stream (0 based)
+        /// </summary>
+        public int Offset { get; set; }
+
+        /// <summary>
+        /// Line number (1 based)
+        /// </summary>
+        public int Line { get; set; }
+
+        /// <summary>
+        /// Offset from the start of the line (1 based)
+        /// </summary>
+        public int LineOffset { get; set; }
+
+        /// <summary>
+        /// Construct a position at the start of a stream
+        /// </summary>
+        // public Position()
+        // {
+        //     Offset = 0;
+        //     Line = 1; LineOffset = 1;
+        // }
+
+        /// <summary>
+        /// Construct a position at the given location
+        /// </summary>
+        /// <param name="offset">The offset from the start of the stream (0 based)</param>
+        /// <param name="line">The offset the line (1 based)</param>
+        /// <param name="lineOffset">The offset from the start of the line (1 based)</param>
+        public Position(int offset, int line, int lineOffset)
+        {
+            Offset = offset;
+            Line = line;
+            LineOffset = lineOffset;
+        }
+
+        static public Position Start = new Position(0, 1, 1);
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Position other)
+            {
+                return other.Offset == Offset && other.Line == Line
+                    && other.LineOffset == LineOffset;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            int hashCode = Offset;
+            hashCode = (hashCode * 397) ^ LineOffset;
+            hashCode = (hashCode * 397) ^ Line;
+            return hashCode;
+        }
+
+        public string FormatLineOffset()
+        {
+            return $"{Line}, {LineOffset}";
+        }
+
+        public override string ToString()
+        {
+            return $"{Offset}, {Line}, {LineOffset}";
+        }
+    }
+
     public class ParserStream
     {
         public const int Eof = -1;
 
         int _peekIndex = 0;
-        int _index = 0;
+        Position _position = Position.Start;
         List<char> _buf = new List<char>();
         TextReader _input;
         bool _inputEnd = false;
@@ -71,6 +141,16 @@ namespace Fluent.Net
                 _captureBuf.Append((char)Current);
             }
 
+            if (Current == '\n')
+            {
+                _position.Line++;
+                _position.LineOffset = 1;
+            }
+            else
+            {
+                _position.LineOffset++;
+            }
+
             if (_buf.Count == 0)
             {
                 Current = _input.Read();
@@ -81,7 +161,7 @@ namespace Fluent.Net
                 _buf.RemoveAt(0);
             }
 
-            _index++;
+            _position.Offset++;
 
             if (Current == Eof)
             {
@@ -89,7 +169,7 @@ namespace Fluent.Net
                 _peekEnd = true;
             }
 
-            _peekIndex = _index;
+            _peekIndex = _position.Offset;
             return Current;
         }
 
@@ -115,7 +195,7 @@ namespace Fluent.Net
                     return Eof;
                 }
 
-                int diff = _peekIndex - _index;
+                int diff = _peekIndex - _position.Offset;
 
                 if (diff == 0)
                 {
@@ -139,7 +219,7 @@ namespace Fluent.Net
 
             _peekIndex += 1;
 
-            int diff = _peekIndex - _index;
+            int diff = _peekIndex - _position.Offset;
 
             if (diff > _buf.Count)
             {
@@ -158,9 +238,14 @@ namespace Fluent.Net
             return _buf[diff - 1];
         }
 
+        public Position GetPosition()
+        {
+            return _position;
+        }
+
         public int GetIndex()
         {
-            return _index;
+            return _position.Offset;
         }
 
         public int GetPeekIndex()
@@ -194,14 +279,14 @@ namespace Fluent.Net
             }
             else
             {
-                _peekIndex = _index;
+                _peekIndex = _position.Offset;
                 _peekEnd = _inputEnd;
             }
         }
 
         public void SkipToPeek()
         {
-            int diff = _peekIndex - _index;
+            int diff = _peekIndex - _position.Offset;
 
             if (diff > 0)
             {
@@ -217,7 +302,7 @@ namespace Fluent.Net
                 _buf.RemoveRange(0, Math.Min(_buf.Count, diff));
             }
 
-            _index = _peekIndex;
+            _position.Offset = _peekIndex;
         }
     }
 }

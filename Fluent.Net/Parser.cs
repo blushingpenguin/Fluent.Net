@@ -26,7 +26,7 @@ namespace Fluent.Net
                 return wrappedFn();
             }
 
-            int start = ps.GetIndex();
+            var start = ps.GetPosition();
             var node = wrappedFn();
 
             // Don't re-add the span if the node already has it.  This may happen when
@@ -36,7 +36,7 @@ namespace Fluent.Net
                 return node;
             }
 
-            var end = ps.GetIndex();
+            var end = ps.GetPosition();
             node.AddSpan(start, end);
             return node;
         }
@@ -107,7 +107,7 @@ namespace Fluent.Net
 
             if (_withSpans)
             {
-                res.AddSpan(0, ps.GetIndex());
+                res.AddSpan(Position.Start, ps.GetPosition());
             }
 
             return res;
@@ -143,7 +143,7 @@ namespace Fluent.Net
 
         Ast.Entry GetEntryOrJunk(FtlParserStream ps)
         {
-            int entryStartPos = ps.GetIndex();
+            var entryStartPos = ps.GetPosition();
             ps.BeginCapture();
 
             try
@@ -154,9 +154,9 @@ namespace Fluent.Net
             }
             catch (ParseException e)
             {
-                int errorIndex = ps.GetIndex();
+                var errorPos = ps.GetPosition();
                 ps.SkipToNextEntryStart();
-                int nextEntryStart = ps.GetIndex();
+                var nextEntryStart = ps.GetPosition();
 
                 // Create a Junk instance
                 var junk = new Ast.Junk(ps.GetCapturedText());
@@ -165,7 +165,7 @@ namespace Fluent.Net
                     junk.AddSpan(entryStartPos, nextEntryStart);
                 }
                 var annot = new Ast.Annotation(e.Code, e.Args, e.Message);
-                annot.AddSpan(errorIndex, errorIndex);
+                annot.AddSpan(errorPos, errorPos);
                 junk.AddAnnotation(annot);
                 return junk;
             }

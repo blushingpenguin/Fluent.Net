@@ -5,27 +5,25 @@ using System.IO;
 
 namespace Fluent.Net.Test
 {
-    public class SerializerTest
+    public class SerializerTest : FtlTestBase
     {
-        static string Ftl(string input) => Util.Ftl(input);
-
         [Test]
         public void SimpleAst()
         {
             var input = new Ast.Resource()
             {
-                Span = new Ast.Span(0, 9),
+                Span = Span(0, 9),
                 Body = new Ast.Entry[]
                 {
                     new Ast.Message()
                     {
                         Comment = null,
-                        Span = new Ast.Span(0, 9),
+                        Span = Span(0, 9),
                         Attributes = new Ast.Attribute[0],
                         Id = new Ast.Identifier()
                         {
                             Name = "foo",
-                            Span = new Ast.Span(0, 3)
+                            Span = Span(0, 3)
                         },
                         Value = new Ast.Pattern()
                         {
@@ -33,7 +31,7 @@ namespace Fluent.Net.Test
                             {
                                 new Ast.TextElement("Foo")
                             },
-                            Span = new Ast.Span(6, 9)
+                            Span = Span(6, 9)
                         }
                     }
                 }

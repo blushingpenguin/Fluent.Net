@@ -69,8 +69,8 @@ namespace Fluent.Net.Test
             var parts = new List<string>();
             parts.Add(GetCodeName(annotation.Code));
 
-            int start = annotation.Span.Start,
-                end = annotation.Span.End;
+            int start = annotation.Span.Start.Offset,
+                end = annotation.Span.End.Offset;
             if (start == end)
             {
                 parts.Add($"pos {start}");
