@@ -3,6 +3,21 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <PackageId>Fluent.Net.SyntaxTest</PackageId>
+    <Version>1.0.0.1</Version>
+    <Authors>Mark Weaver</Authors>
+    <Company>Blushing Penguin Coding Club</Company>
+    <Description>Fluent.Net.SyntaxTest is a command line tool for checking that fluent translations files conform to the fluent syntax specification.  See the Fluent.Net package for more details.
+</Description>
+    <Copyright>Copyright (c) 2018 Mark Weaver</Copyright>
+    <PackageLicenseUrl>https://github.com/blushingpenguin/Fluent.Net/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/blushingpenguin/Fluent.Net/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/blushingpenguin/Fluent.Net/</RepositoryUrl>
+    <RepositoryType>github</RepositoryType>
+    <PackageTags>fluent, i18n, internationalization, l10n, l20n, globalization, translation</PackageTags>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <AssemblyVersion>1.0.0.1</AssemblyVersion>
+    <FileVersion>1.0.0.1</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

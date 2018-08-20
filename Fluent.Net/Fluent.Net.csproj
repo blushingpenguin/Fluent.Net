@@ -16,7 +16,8 @@ Project Fluent keeps simple things simple and makes complex things possible. The
     <NeutralLanguage>en-US</NeutralLanguage>
     <AssemblyVersion>1.0.0.10</AssemblyVersion>
     <FileVersion>1.0.0.10</FileVersion>
-    <Version>1.0.10</Version>
+    <Version>1.0.24</Version>
+    <PackageId>Fluent.Net</PackageId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
