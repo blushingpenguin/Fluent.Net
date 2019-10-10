@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -11,7 +11,7 @@
     <Description>Fluent.Net.SyntaxTest is a command line tool for checking that fluent translations files conform to the fluent syntax specification.  See the Fluent.Net package for more details.
 </Description>
     <Copyright>Copyright (c) 2018 Mark Weaver</Copyright>
-    <PackageLicenseUrl>https://github.com/blushingpenguin/Fluent.Net/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/blushingpenguin/Fluent.Net/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/blushingpenguin/Fluent.Net/</RepositoryUrl>
     <RepositoryType>github</RepositoryType>
