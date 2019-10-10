@@ -806,6 +806,7 @@ namespace Fluent.Net
             if (Current == '.')
             {
                 num.Append('.');
+                Next();
 
                 // followed by at least one digit
                 if (Current < '0' || Current > '9')
