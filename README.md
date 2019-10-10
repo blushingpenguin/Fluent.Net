@@ -11,6 +11,8 @@ The syntax used for describing translations is easy to read and understand.  At
 the same time it allows, when necessary, to represent complex concepts from
 natural languages like gender, plurals, conjugations, and others.
 
+A fully working sample project is included [here][(https://github.com/blushingpenguin/Fluent.Net/tree/master/Fluent.Net.SimpleExample).
+
 ## Packages ##
 
 Fluent.Net can also be installed from [nuget.org](https://www.nuget.org/packages/Fluent.Net/).
