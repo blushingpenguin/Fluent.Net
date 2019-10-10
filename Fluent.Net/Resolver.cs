@@ -144,7 +144,7 @@ namespace Fluent.Net
                 var member = SelectExpression(env, sel);
                 return ResolveNode(env, member);
             }
-            env.Errors.Add(new RangeError("No value"));
+            env.Errors?.Add(new RangeError("No value"));
             return new FluentNone();
         }
 
@@ -170,7 +170,7 @@ namespace Fluent.Net
                 return members[def.Value].Value;
             }
 
-            env.Errors.Add(new RangeError("No default"));
+            env.Errors?.Add(new RangeError("No default"));
             return new FluentNone();
         }
 
@@ -199,7 +199,7 @@ namespace Fluent.Net
                 var err = isTerm
                     ? new ReferenceError($"Unknown term: {ref_.Name}")
                     : new ReferenceError($"Unknown message: {ref_.Name}");
-                env.Errors.Add(err);
+                env.Errors?.Add(err);
                 return new FluentNone(ref_.Name);
             }
 
@@ -256,7 +256,7 @@ namespace Fluent.Net
                 }
             }
 
-            env.Errors.Add(new ReferenceError(
+            env.Errors?.Add(new ReferenceError(
                 $"Unknown variant: {keyword.Format(env.Context)}"));
             return message;
         }
@@ -294,7 +294,7 @@ namespace Fluent.Net
                 }
             }
 
-            env.Errors.Add(new ReferenceError($"Unknown attribute: {expr.Name}"));
+            env.Errors?.Add(new ReferenceError($"Unknown attribute: {expr.Name}"));
             return message;
         }
 
@@ -366,7 +366,7 @@ namespace Fluent.Net
             if (env.Arguments == null ||
                 !env.Arguments.TryGetValue(varReference.Name, out arg))
             {
-                env.Errors.Add(new ReferenceError($"Unknown variable: ${varReference.Name}"));
+                env.Errors?.Add(new ReferenceError($"Unknown variable: ${varReference.Name}"));
                 return new FluentNone(varReference.Name);
             }
 
@@ -392,7 +392,7 @@ namespace Fluent.Net
                 return new FluentDateTime(dt);
             }
 
-            env.Errors.Add(new TypeError(
+            env.Errors?.Add(new TypeError(
                 $"Unsupported variable type: {varReference.Name}, {arg?.GetType()?.ToString() ?? "null"}"));
             return new FluentNone(varReference.Name);
         }
@@ -419,7 +419,7 @@ namespace Fluent.Net
             if (!env.Context.Functions.TryGetValue(expr.Function, out fn) &&
                 !BuiltInFunctions.TryGetValue(expr.Function, out fn))
             {
-                env.Errors.Add(new ReferenceError(
+                env.Errors?.Add(new ReferenceError(
                     $"Unknown function: {expr.Function}()"));
                 return new FluentNone($"{expr.Function}()");
             }
@@ -461,7 +461,7 @@ namespace Fluent.Net
         {
             if (env.Dirty.Contains(pattern))
             {
-                env.Errors.Add(new RangeError("Cyclic reference"));
+                env.Errors?.Add(new RangeError("Cyclic reference"));
                 return new FluentNone();
             }
 
@@ -494,7 +494,7 @@ namespace Fluent.Net
 
                 if (part.Length > MAX_PLACEABLE_LENGTH)
                 {
-                    env.Errors.Add(
+                    env.Errors?.Add(
                       new RangeError(
                         "Too many characters in placeable " +
                         $"({part.Length}, max allowed is {MAX_PLACEABLE_LENGTH})"));

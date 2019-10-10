@@ -668,7 +668,6 @@ namespace Fluent.Net
             {
                 Next();
                 var key = GetVariantKey();
-                Next();
                 return new GetVariant() { Id = messageReference, Key = key };
             }
 

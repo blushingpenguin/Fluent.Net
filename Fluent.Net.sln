@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2042
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29403.142
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fluent.Net", "Fluent.Net\Fluent.Net.csproj", "{A530F7A4-009E-4376-8A14-932771446575}"
 EndProject
@@ -13,9 +13,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitignore = .gitignore
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluent.Net.SyntaxTest", "Fluent.Net.SyntaxTest\Fluent.Net.SyntaxTest.csproj", "{F0CFAA41-FC32-4579-A7CD-A0A20723352C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fluent.Net.SyntaxTest", "Fluent.Net.SyntaxTest\Fluent.Net.SyntaxTest.csproj", "{F0CFAA41-FC32-4579-A7CD-A0A20723352C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluent.Net.SyntaxTest.Test", "Fluent.Net.SyntaxTest.Test\Fluent.Net.SyntaxTest.Test.csproj", "{91637454-B5D4-4C31-966E-8F257F891D5C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fluent.Net.SyntaxTest.Test", "Fluent.Net.SyntaxTest.Test\Fluent.Net.SyntaxTest.Test.csproj", "{91637454-B5D4-4C31-966E-8F257F891D5C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluent.Net.SimpleExample", "Fluent.Net.SimpleExample\Fluent.Net.SimpleExample.csproj", "{D65B34FF-7797-421D-8468-39583548F6E1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{91637454-B5D4-4C31-966E-8F257F891D5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{91637454-B5D4-4C31-966E-8F257F891D5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{91637454-B5D4-4C31-966E-8F257F891D5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D65B34FF-7797-421D-8468-39583548F6E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D65B34FF-7797-421D-8468-39583548F6E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D65B34FF-7797-421D-8468-39583548F6E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D65B34FF-7797-421D-8468-39583548F6E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
