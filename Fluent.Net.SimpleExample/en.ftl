@@ -19,3 +19,6 @@ sync-headline-title =
     your data always with you
 sync-signedout-title =
     Connect with your {-sync-brand-name}
+
+## Datetime
+date-is = The date is 'DATETIME($dt, weekday: "short", month: "short", year: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric")'.
