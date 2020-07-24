@@ -16,9 +16,9 @@ environment:
 configuration:
   - Release
 test_script:
-  - nuget install OpenCover -OutputDirectory packages -Version 4.6.519
-  - .\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -targetargs:"test Fluent.Net.Test\Fluent.Net.Test.csproj --configuration Release --no-build" -filter:"+[*]* -[*.Test*]* -[nunit*]*" -excludebyattribute:"System.CodeDom.Compiler.GeneratedCodeAttribute" -skipautoprops -oldStyle -mergeoutput -register:Path32 -output:"OpenCover.xml"
-  - .\packages\OpenCover.4.6.519\tools\OpenCover.Console.exe -target:"dotnet.exe" -targetargs:"test Fluent.Net.SyntaxTest.Test\Fluent.Net.SyntaxTest.Test.csproj --configuration Release --no-build" -filter:"+[*]* -[*.Test*]* -[nunit*]*" -excludebyattribute:"System.CodeDom.Compiler.GeneratedCodeAttribute" -skipautoprops -oldStyle -mergeoutput -register:Path32 -output:"OpenCover.xml"
+  - nuget install OpenCover -OutputDirectory packages -Version 4.7.922
+  - .\packages\OpenCover.4.7.922\tools\OpenCover.Console.exe -target:"dotnet.exe" -targetargs:"test Fluent.Net.Test\Fluent.Net.Test.csproj --configuration Release --no-build" -filter:"+[*]* -[*.Test*]* -[nunit*]*" -excludebyattribute:"System.CodeDom.Compiler.GeneratedCodeAttribute" -skipautoprops -oldStyle -mergeoutput -register:Path32 -output:"OpenCover.xml"
+  - .\packages\OpenCover.4.7.922\tools\OpenCover.Console.exe -target:"dotnet.exe" -targetargs:"test Fluent.Net.SyntaxTest.Test\Fluent.Net.SyntaxTest.Test.csproj --configuration Release --no-build" -filter:"+[*]* -[*.Test*]* -[nunit*]*" -excludebyattribute:"System.CodeDom.Compiler.GeneratedCodeAttribute" -skipautoprops -oldStyle -mergeoutput -register:Path32 -output:"OpenCover.xml"
 after_test:
 - ps: |
     $env:PATH = 'C:\msys64\usr\bin;' + $env:PATH

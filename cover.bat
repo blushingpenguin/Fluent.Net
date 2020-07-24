@@ -2,9 +2,9 @@
 
 rem Install OpenCover and ReportGenerator, and save the path to their executables.
 echo Installing packages
-nuget install -Verbosity quiet -OutputDirectory packages -Version 4.6.519 OpenCover
+nuget install -Verbosity quiet -OutputDirectory packages -Version 4.7.922 OpenCover
 if %errorlevel% neq 0 exit /b %errorlevel%
-nuget install -Verbosity quiet -OutputDirectory packages -Version 3.1.2 ReportGenerator
+nuget install -Verbosity quiet -OutputDirectory packages -Version 4.6.1 ReportGenerator
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo Building Release with symbols
@@ -17,13 +17,13 @@ if not exist coverage mkdir coverage
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo Running OpenCover
-"packages\OpenCover.4.6.519\tools\OpenCover.Console.exe" -target:"dotnet.exe" -targetargs:"test Fluent.Net.Test\Fluent.Net.Test.csproj --configuration Release --no-build" -filter:"+[*]* -[*.Test*]* -[nunit*]*" -excludebyattribute:"System.CodeDom.Compiler.GeneratedCodeAttribute" -skipautoprops -oldStyle -mergeoutput -register:user -output:"coverage\OpenCover.xml"
+"packages\OpenCover.4.7.922\tools\OpenCover.Console.exe" -target:"dotnet.exe" -targetargs:"test Fluent.Net.Test\Fluent.Net.Test.csproj --configuration Release --no-build" -filter:"+[*]* -[*.Test*]* -[nunit*]*" -excludebyattribute:"System.CodeDom.Compiler.GeneratedCodeAttribute" -skipautoprops -oldStyle -mergeoutput -register:user -output:"coverage\OpenCover.xml"
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo Running OpenCover for SyntaxTest
-"packages\OpenCover.4.6.519\tools\OpenCover.Console.exe" -target:"dotnet.exe" -targetargs:"test Fluent.Net.SyntaxTest.Test\Fluent.Net.SyntaxTest.Test.csproj --configuration Release --no-build" -filter:"+[*]* -[*.Test*]* -[nunit*]*" -excludebyattribute:"System.CodeDom.Compiler.GeneratedCodeAttribute" -skipautoprops -oldStyle -mergeoutput -register:user -output:"coverage\OpenCover.xml"
+"packages\OpenCover.4.7.922\tools\OpenCover.Console.exe" -target:"dotnet.exe" -targetargs:"test Fluent.Net.SyntaxTest.Test\Fluent.Net.SyntaxTest.Test.csproj --configuration Release --no-build" -filter:"+[*]* -[*.Test*]* -[nunit*]*" -excludebyattribute:"System.CodeDom.Compiler.GeneratedCodeAttribute" -skipautoprops -oldStyle -mergeoutput -register:user -output:"coverage\OpenCover.xml"
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo Running ReportGenerator
-"packages\ReportGenerator.3.1.2\tools\ReportGenerator.exe" "-reports:coverage\OpenCover.xml" "-targetdir:coverage"
+"packages\ReportGenerator.4.6.1\tools\netcoreapp3.0\ReportGenerator.exe" "-reports:coverage\OpenCover.xml" "-targetdir:coverage"
 if %errorlevel% neq 0 exit /b %errorlevel%
