@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Fluent.Net.SyntaxTest": {
+      "commandName": "Project",
+      "commandLineArgs": "--normalised --folders . Admin Apps Email Flow Forms Id IdServer Integrations Process Profile Surveys Tasks VendeqAdmin",
+      "workingDirectory": "C:\\dev\\vendeq-common-translations"
+    }
+  }
+}

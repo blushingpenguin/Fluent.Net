@@ -96,7 +96,7 @@ namespace Fluent.Net.SyntaxTest
             return errors;
         }
 
-        static int Parse(string file, bool useRuntime)
+        static int Parse(string file, bool useRuntime, bool checkNormalised)
         {
             if (!File.Exists(file))
             {
@@ -104,25 +104,75 @@ namespace Fluent.Net.SyntaxTest
                 return 1;
             }
 
+            int errors = 0;
+            if (checkNormalised)
+            {
+                errors += CheckNormalised(file);
+            }
+
             using (var sr = new StreamReader(file))
             {
-                return useRuntime ?
+                errors += useRuntime ?
                     RuntimeParse(file, sr, null) :
                     Parse(file, sr, null);
             }
+
+            return errors;
         }
 
-        static int ParseFiles(IEnumerable<string> files, bool useRuntime)
+        static int ParseFiles(IEnumerable<string> files, bool useRuntime, bool checkNormalised)
         {
             int errors = 0;
             foreach (string file in files)
             {
-                errors += Parse(file, useRuntime);
+                errors += Parse(file, useRuntime, checkNormalised);
             }
             return errors;
         }
 
-        static int ParseFolders(IEnumerable<string> folders, bool useRuntime)
+        internal static bool StartsWithBOM(byte[] buf, long offset, int length)
+        {
+            return length > 3 && offset == 0 && 
+                buf[0] == 0xEF && buf[1] == 0xBB && buf[2] == 0xBF;
+        }
+
+        static int CheckNormalised(string file)
+        {
+            long offset = 0;
+            byte[] buf = new byte[65536];
+            using (var f = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                for (; ; )
+                {
+                    int read = f.Read(buf, 0, buf.Length);
+                    if (read == 0)
+                    {
+                        break;
+                    }
+                    if (StartsWithBOM(buf, offset, read))
+                    {
+                        Console.WriteLine($"{file}: starts with a unicode BOM");
+                        return 1;
+                    }
+                    for (int i = 0; i < read; ++i, ++offset)
+                    {
+                        if (buf[i] == '\0')
+                        {
+                            Console.WriteLine($"{file}: has a NUL character at offset {offset}");
+                            return 1;
+                        }
+                        if (buf[i] == '\r')
+                        {
+                            Console.WriteLine($"{file}: has a CR character at offset {offset}");
+                            return 1;
+                        }
+                    }
+                }
+            }
+            return 0;
+        }
+
+        static int ParseFolders(IEnumerable<string> folders, bool useRuntime, bool checkNormalised)
         {
             int errors = 0;
             var messageSets = new Dictionary<string, Dictionary<string, Location>>();
@@ -138,6 +188,11 @@ namespace Fluent.Net.SyntaxTest
                     {
                         messages = new Dictionary<string, Location>();
                         messageSets.Add(set, messages);
+                    }
+
+                    if (checkNormalised)
+                    {
+                        errors += CheckNormalised(file);
                     }
 
                     using (var sr = new StreamReader(file))
@@ -156,6 +211,7 @@ namespace Fluent.Net.SyntaxTest
             bool showHelp = false;
             bool useRuntime = false;
             bool useFolders = false;
+            bool checkNormalised = false;
 
             var opts = new OptionSet()
             {
@@ -163,6 +219,9 @@ namespace Fluent.Net.SyntaxTest
                     v => useRuntime = v != null },
                 { "f|folders", "treat input as folders containing ftl files",
                     v => useFolders = v != null },
+                { "n|normalised", "check that input files are LF terminated" +
+                    " without a BOM",
+                    v => checkNormalised = true },
                 { "h|help", "show this message and exit",
                     v => showHelp = v != null }
             };
@@ -199,9 +258,9 @@ namespace Fluent.Net.SyntaxTest
 
             if (useFolders)
             {
-                return ParseFolders(extra, useRuntime);
+                return ParseFolders(extra, useRuntime, checkNormalised);
             }
-            return ParseFiles(extra, useRuntime);
+            return ParseFiles(extra, useRuntime, checkNormalised);
         }
 
         internal static int Main(string[] args)
