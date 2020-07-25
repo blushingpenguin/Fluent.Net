@@ -23,7 +23,7 @@ after_test:
 - ps: |
     $env:PATH = 'C:\Program Files\git\usr\bin;' + $env:PATH
     Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
-    bash codecov.sh -f '"coverage/*.xml"' -t $env:CODECOV_REPO_TOKEN
+    bash codecov.sh -f '"coverage/*.xml"' -t $env:CODECOV_REPO_TOKEN -v
 for:
 -
   branches:
