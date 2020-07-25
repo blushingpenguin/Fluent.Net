@@ -23,8 +23,8 @@ after_test:
 - ps: |
     $env:PATH = 'C:\Program Files\git\usr\bin;' + $env:PATH
     Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
-    bash codecov.sh -f '"coverage/*.xml"' -t $env:CODECOV_REPO_TOKEN -v
-    echo ("last exit code " + $lastExitCode)
+    bash codecov.sh -f '"coverage/*.xml"' -t $env:CODECOV_REPO_TOKEN
+    echo ("for some reason printing the last exit code makes appveyor think this step succeeded " + $lastExitCode)
 for:
 -
   branches:
@@ -37,7 +37,7 @@ for:
   deploy:
     provider: NuGet
     api_key:
-      secure: lo9gC4NDoECBxAzgZZMFKklAQGmyL7VOIfMzPqRB1InlB4D5g4A+tSGUITR2pS6i
+      secure: 73ttnHBwugNOwKHU0rzSnvQnhH13kusweIHj4tRAwRzpcALLLz/Xtyr+neooO5NO
     skip_symbols: false
 
 # on_finish:
