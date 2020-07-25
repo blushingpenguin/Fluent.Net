@@ -21,7 +21,7 @@ test_script:
       dotnet test --configuration Release --filter=TestCategory!=ApiTests /p:CollectCoverage=true /p:Exclude='\"[*TestAdapter*]*,[*]*.Startup*,[*]*.Program,[*.Test*]*,[nunit*]*,[Fluent.Net]*\"' /p:ExcludeByAttribute='\"Obsolete,GeneratedCode,CompilerGeneratedAttribute\"'  /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../coverage/Fluent.Net.SyntaxTest.coverage.cobertura.xml /p:Threshold=80 /p:ThresholdType=branch Fluent.Net.SyntaxTest.Test/Fluent.Net.SyntaxTest.Test.csproj
 after_test:
 - ps: |
-    # $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+    $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
     $env:PATH = 'C:\Program Files\git\usr\bin;' + $env:PATH
     Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
     bash codecov.sh -f '"coverage/*.xml"' -t $env:CODECOV_REPO_TOKEN
