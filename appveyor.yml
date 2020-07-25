@@ -24,6 +24,7 @@ after_test:
     $env:PATH = 'C:\Program Files\git\usr\bin;' + $env:PATH
     Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
     bash codecov.sh -f '"coverage/*.xml"' -t $env:CODECOV_REPO_TOKEN -v
+    echo ("last exit code " + $lastExitCode)
 for:
 -
   branches:
@@ -39,5 +40,5 @@ for:
       secure: lo9gC4NDoECBxAzgZZMFKklAQGmyL7VOIfMzPqRB1InlB4D5g4A+tSGUITR2pS6i
     skip_symbols: false
 
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+# on_finish:
+#   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
