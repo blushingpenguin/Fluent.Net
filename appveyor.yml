@@ -18,7 +18,7 @@ configuration:
 test_script:
   - ps: |
       dotnet test --configuration Release --filter=TestCategory!=ApiTests /p:CollectCoverage=true /p:Exclude='\"[*TestAdapter*]*,[*]*.Startup*,[*]*.Program,[*.Test*]*,[nunit*]*\"' /p:ExcludeByAttribute='\"Obsolete,GeneratedCode,CompilerGeneratedAttribute\"'  /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../coverage/Fluent.Net.coverage.cobertura.xml /p:Threshold=80 /p:ThresholdType=branch Fluent.Net.Test/Fluent.Net.Test.csproj
-      dotnet test --configuration Release --filter=TestCategory!=ApiTests /p:CollectCoverage=true /p:Exclude='\"[*TestAdapter*]*,[*]*.Startup*,[*]*.Program,[*.Test*]*,[nunit*]*,[Fluent.Net]*\"' /p:ExcludeByAttribute='\"Obsolete,GeneratedCode,CompilerGeneratedAttribute\"'  /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../coverage/Fluent.Net.SyntaxTest.coverage.cobertura.xml /p:Threshold=80 /p:ThresholdType=branch Fluent.Net.Syntax.Test/Fluent.Net.SyntaxTest.Test.csproj
+      dotnet test --configuration Release --filter=TestCategory!=ApiTests /p:CollectCoverage=true /p:Exclude='\"[*TestAdapter*]*,[*]*.Startup*,[*]*.Program,[*.Test*]*,[nunit*]*,[Fluent.Net]*\"' /p:ExcludeByAttribute='\"Obsolete,GeneratedCode,CompilerGeneratedAttribute\"'  /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../coverage/Fluent.Net.SyntaxTest.coverage.cobertura.xml /p:Threshold=80 /p:ThresholdType=branch Fluent.Net.SyntaxTest.Test/Fluent.Net.SyntaxTest.Test.csproj
 after_test:
 - ps: |
     # $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
