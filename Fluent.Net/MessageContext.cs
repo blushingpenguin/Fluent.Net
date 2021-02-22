@@ -386,8 +386,8 @@ namespace Fluent.Net
         readonly static IDictionary<string, Resolver.ExternalFunction> s_emptyFunctions = new
             Dictionary<string, Resolver.ExternalFunction>();
         public IEnumerable<string> Locales { get; private set; }
-        internal IDictionary<string, Message> _messages = new Dictionary<string, Message>();
-        internal IDictionary<string, Message> _terms = new Dictionary<string, Message>();
+        internal Dictionary<string, Message> _messages = new Dictionary<string, Message>();
+        internal Dictionary<string, Message> _terms = new Dictionary<string, Message>();
         public Func<string, string> Transform { get; private set; }
         public bool UseIsolating { get; private set; } = true;
         public IDictionary<string, Resolver.ExternalFunction> Functions { get; private set; }
@@ -448,18 +448,11 @@ namespace Fluent.Net
         ) : this(new string[] { locale }, options)
         {
         }
-
-
-
+        
         /// <summary>
-        /// Return an iterator over public `[id, message]` pairs.
-        ///</summary>
-        /// @returns {Iterator}
-        ///
-        IEnumerator<KeyValuePair<string, Message>> Messages
-        {
-            get { return _messages.GetEnumerator(); }
-        }
+        /// All available messages in the context.
+        /// </summary>
+        private IReadOnlyDictionary<string, Message> Messages => _messages;
 
         /// <summary>
         /// Check if a message is present in the context.
@@ -578,7 +571,7 @@ namespace Fluent.Net
                             $"Attempt to override an existing term: \"{entry.Key}\""));
                         continue;
                     }
-                    _terms.Add(entry);
+                    _terms.Add(entry.Key, entry.Value);
                 }
                 else
                 {
@@ -588,7 +581,7 @@ namespace Fluent.Net
                             $"Attempt to override an existing message: \"{entry.Key}\""));
                         continue;
                     }
-                    _messages.Add(entry);
+                    _messages.Add(entry.Key, entry.Value);
                 }
             }
             return errors;
