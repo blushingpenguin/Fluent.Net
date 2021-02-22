@@ -263,7 +263,7 @@ namespace Fluent.Net
             }
             else if (other is FluentNumber fnum)
             {
-                return Value == Plural.LocaleRules.Select(ctx.Locales, fnum.Value);
+                return Value == Plural.LocaleRules.Select(ctx.Cultures, fnum.Value);
             }
 
             return false;

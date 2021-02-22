@@ -72,19 +72,6 @@ namespace Fluent.Net.SimpleExample
             return "";
         }
 
-        public string PreferredLocale => _contexts.First().Locales.First();
-
-        CultureInfo _culture;
-        public CultureInfo Culture
-        {
-            get
-            {
-                if (_culture == null)
-                {
-                    _culture = new CultureInfo(PreferredLocale);
-                }
-                return _culture;
-            }
-        }
+        public CultureInfo Culture => _contexts.First().Culture;
     }
 }

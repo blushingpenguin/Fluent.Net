@@ -31,7 +31,12 @@ namespace Fluent.Net
     {
         readonly static IDictionary<string, Resolver.ExternalFunction> s_emptyFunctions = new
             Dictionary<string, Resolver.ExternalFunction>();
-        public IEnumerable<string> Locales { get; private set; }
+        
+        public IReadOnlyList<CultureInfo> Cultures { get; }
+
+        [Obsolete("Access Cultures instead")]
+        public IEnumerable<string> Locales => Cultures.Select(c => c.IetfLanguageTag);
+        
         internal Dictionary<string, Message> _messages = new Dictionary<string, Message>();
         internal Dictionary<string, Message> _terms = new Dictionary<string, Message>();
         public Func<string, string> Transform { get; private set; }
@@ -76,10 +81,14 @@ namespace Fluent.Net
         public MessageContext(
             IEnumerable<string>     locales, 
             MessageContextOptions   options = null
-        )
+        ) : this(locales.Select(l => new CultureInfo(l)), options)
         {
-            Locales = locales;
-            Culture = new CultureInfo(Locales.First());
+        }
+
+        public MessageContext(IEnumerable<CultureInfo> cultures, MessageContextOptions options = null)
+        {
+            Cultures = cultures.ToArray();
+            Culture = Cultures[0];
             if (options != null)
             {
                 UseIsolating = options.UseIsolating;
@@ -87,11 +96,18 @@ namespace Fluent.Net
             Transform = options?.Transform ?? NoOpTransform;
             Functions = new Dictionary<string, Resolver.ExternalFunction>(options?.Functions ?? s_emptyFunctions);
         }
-
+        
+        public MessageContext(
+            CultureInfo culture,
+            MessageContextOptions options = null
+        ) : this(new [] { culture }, options)
+        {
+        }
+        
         public MessageContext(
             string locale,
             MessageContextOptions options = null
-        ) : this(new string[] { locale }, options)
+        ) : this(new CultureInfo(locale), options)
         {
         }
         

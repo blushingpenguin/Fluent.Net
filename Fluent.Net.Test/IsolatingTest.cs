@@ -67,7 +67,7 @@ namespace Fluent.Net.Test
             var args = new Dictionary<string, object> { { "arg", dt } };
             var msg = ctx.GetMessage("baz");
             var val = ctx.Format(msg, args, errors);
-            var dtf = dt.ToString(new CultureInfo(ctx.Locales.First()));
+            var dtf = dt.ToString(ctx.Culture);
             val.Should().Be($"{FSI}{dtf}{PDI} Baz");
             errors.Count.Should().Be(0);
         }
