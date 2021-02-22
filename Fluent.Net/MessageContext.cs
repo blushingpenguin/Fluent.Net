@@ -439,7 +439,7 @@ namespace Fluent.Net
                 UseIsolating = options.UseIsolating;
             }
             Transform = options?.Transform ?? NoOpTransform;
-            Functions = options?.Functions ?? s_emptyFunctions;
+            Functions = new Dictionary<string, Resolver.ExternalFunction>(options?.Functions ?? s_emptyFunctions);
         }
 
         public MessageContext(
