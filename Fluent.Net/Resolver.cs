@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Fluent.Net
 {
-/**
+    /**
  * @overview
  *
  * The role of the Fluent resolver is to format a translation object to an
@@ -59,10 +59,11 @@ namespace Fluent.Net
             IDictionary<string, object> options);
 
         static public IDictionary<string, ExternalFunction> BuiltInFunctions { get; } =
-            new Dictionary<string, ExternalFunction>() {
-            { "NUMBER", BuiltIns.Number },
-            { "DATETIME", BuiltIns.DateTime }
-        };
+            new Dictionary<string, ExternalFunction>()
+            {
+                {"NUMBER", BuiltIns.Number},
+                {"DATETIME", BuiltIns.DateTime}
+            };
 
         // Prevent expansion of too long placeables.
         const int MAX_PLACEABLE_LENGTH = 2500;
@@ -93,6 +94,7 @@ namespace Fluent.Net
             {
                 return new FluentString(env.Context.Transform(se.Value));
             }
+
             if (expr is FluentNone none)
             {
                 return none;
@@ -102,48 +104,58 @@ namespace Fluent.Net
             {
                 return ResolveNode(env, msg.Value);
             }
+
             if (expr is Pattern p)
             {
                 return Pattern(env, p);
             }
+
             if (expr is VariantName varName)
             {
                 return new FluentSymbol(varName.Name);
             }
+
             if (expr is NumberLiteral num)
             {
                 return new FluentNumber(num.Value);
             }
+
             if (expr is VariableReference arg)
             {
                 return VariableReference(env, arg);
             }
+
             //                case "fun":
             //                    return FunctionReference(env, expr);
             if (expr is CallExpression call)
             {
                 return CallExpression(env, call);
             }
+
             if (expr is MessageReference ref_)
             {
                 var msgRef = MessageReference(env, ref_);
                 return ResolveNode(env, msgRef);
             }
+
             if (expr is GetAttribute attrExpr)
             {
                 var attr = AttributeExpression(env, attrExpr);
                 return ResolveNode(env, attr);
             }
+
             if (expr is GetVariant varExpr)
             {
                 var variant = VariantExpression(env, varExpr);
                 return ResolveNode(env, variant);
             }
+
             if (expr is SelectExpression sel)
             {
                 var member = SelectExpression(env, sel);
                 return ResolveNode(env, member);
             }
+
             env.Errors?.Add(new RangeError("No value"));
             return new FluentNone();
         }
@@ -186,13 +198,13 @@ namespace Fluent.Net
          * @returns {FluentType}
          * @private
          */
-
         static Node MessageReference(ResolverEnvironment env, MessageReference ref_)
         {
             bool isTerm = ref_.Name.StartsWith("-");
             Message message;
-            (isTerm ? env.Context._terms
-                    : env.Context._messages).TryGetValue(ref_.Name, out message);
+            (isTerm
+                ? env.Context._terms
+                : env.Context._messages).TryGetValue(ref_.Name, out message);
 
             if (message == null)
             {
@@ -229,6 +241,7 @@ namespace Fluent.Net
             {
                 return message;
             }
+
             if (message is Message actualMessage)
             {
                 message = actualMessage.Value;
@@ -241,7 +254,7 @@ namespace Fluent.Net
                 }
             }
 
-            var keyword = (IFluentType)ResolveNode(env, expr.Key);
+            var keyword = (IFluentType) ResolveNode(env, expr.Key);
 
             if (message is SelectExpression sexp)
             {
@@ -283,7 +296,7 @@ namespace Fluent.Net
                 return message;
             }
 
-            var messageNode = (Message)message;
+            var messageNode = (Message) message;
             if (messageNode.Attributes != null)
             {
                 // Match the specified name against keys of each attribute.
@@ -332,14 +345,14 @@ namespace Fluent.Net
             {
                 var key = ResolveNode(env, variant.Key);
                 bool keyCanMatch =
-                  key is FluentNumber || key is FluentSymbol;
+                    key is FluentNumber || key is FluentSymbol;
 
                 if (!keyCanMatch)
                 {
                     continue;
                 }
 
-                if (((IFluentType)key).Match(env.Context, selector))
+                if (((IFluentType) key).Match(env.Context, selector))
                 {
                     return variant.Value;
                 }
@@ -381,12 +394,14 @@ namespace Fluent.Net
             {
                 return new FluentString(str);
             }
+
             if (arg is sbyte || arg is short || arg is int || arg is long ||
                 arg is byte || arg is ushort || arg is uint || arg is ulong ||
                 arg is float || arg is double || arg is decimal)
             {
                 return new FluentNumber(arg.ToString());
             }
+
             if (arg is DateTime dt)
             {
                 return new FluentDateTime(dt);
@@ -438,6 +453,7 @@ namespace Fluent.Net
                     posArgs.Add(ResolveNode(env, arg));
                 }
             }
+
             return fn(posArgs, keyArgs);
             // try {
             //     return callee(posargs, keyargs);
@@ -473,7 +489,7 @@ namespace Fluent.Net
             // Wrap interpolations with Directional Isolate Formatting characters
             // only when the pattern has more than one element.
             var useIsolating = env.Context.UseIsolating &&
-                pattern.Elements.Count > 1;
+                               pattern.Elements.Count > 1;
 
             foreach (var elem in pattern.Elements)
             {
@@ -484,7 +500,7 @@ namespace Fluent.Net
                 }
 
                 // var part = ((IFluentType)ResolveNode(env, elem)).Format(env.Context);
-                var resolved = ((IFluentType)ResolveNode(env, elem));
+                var resolved = ((IFluentType) ResolveNode(env, elem));
                 var part = resolved.Format(env.Context);
 
                 if (useIsolating)
@@ -495,9 +511,9 @@ namespace Fluent.Net
                 if (part.Length > MAX_PLACEABLE_LENGTH)
                 {
                     env.Errors?.Add(
-                      new RangeError(
-                        "Too many characters in placeable " +
-                        $"({part.Length}, max allowed is {MAX_PLACEABLE_LENGTH})"));
+                        new RangeError(
+                            "Too many characters in placeable " +
+                            $"({part.Length}, max allowed is {MAX_PLACEABLE_LENGTH})"));
                     result.Append(part.Substring(0, MAX_PLACEABLE_LENGTH));
                 }
                 else
@@ -539,7 +555,15 @@ namespace Fluent.Net
                 Context = ctx,
                 Errors = errors
             };
-            return ((IFluentType)ResolveNode(env, message)).Format(ctx);
+            return ((IFluentType) ResolveNode(env, message)).Format(ctx);
         }
+    }
+
+    public class ResolverEnvironment
+    {
+        public ICollection<FluentError> Errors { get; set; }
+        public IDictionary<string, object> Arguments { get; set; }
+        public MessageContext Context { get; set; }
+        public HashSet<Pattern> Dirty { get; set; } = new HashSet<Pattern>();
     }
 }

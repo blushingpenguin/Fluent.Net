@@ -80,4 +80,12 @@ namespace Fluent.Net
             }
         }
     }
+    
+    class OverrideError : ParseException
+    {
+        public OverrideError(string message) :
+            base(message)
+        {
+        }
+    }
 }

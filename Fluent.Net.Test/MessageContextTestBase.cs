@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Fluent.Net.Test
 {
@@ -7,8 +8,7 @@ namespace Fluent.Net.Test
     {
         protected static MessageContext CreateContext(string ftl, bool useIsolating = false)
         {
-            var locales = new string[] { "en-US", "en" };
-            var ctx = new MessageContext(locales, new MessageContextOptions()
+            var ctx = new MessageContext(new CultureInfo("en-US", useUserOverride: false), new MessageContextOptions()
                 { UseIsolating = useIsolating });
             var errors = ctx.AddMessages(Ftl(ftl));
             errors.Should().BeEquivalentTo(new List<ParseException>());

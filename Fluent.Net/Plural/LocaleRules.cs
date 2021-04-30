@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Xml;
 
@@ -27,7 +28,7 @@ namespace Fluent.Net.Plural
             var result = new Dictionary<string, Rules>();
             foreach (XmlElement localeRules in doc.SelectNodes("supplementalData/plurals/pluralRules"))
             {
-                var rules = new Rules() { CountRules = new List<Rule>() };
+                var rules = new Rules() {CountRules = new List<Rule>()};
                 foreach (XmlElement countRule in localeRules.SelectNodes("pluralRule"))
                 {
                     var count = countRule.GetAttribute("count");
@@ -38,35 +39,49 @@ namespace Fluent.Net.Plural
                 }
 
                 string[] locales = localeRules.GetAttribute("locales").Split(
-                    new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    new char[] {' '}, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var locale in locales)
                 {
                     result.Add(locale, rules);
                 }
             }
+
             return result;
         }
 
-        public static string Select(IEnumerable<string> locales, string num)
+        public static string Select(IEnumerable<CultureInfo> cultures, string num)
         {
             Rules rules = null;
-            foreach (var locale in locales)
+            foreach (var culture in cultures)
             {
-                if (s_localeRules.TryGetValue(locale, out rules))
+                if (s_localeRules.TryGetValue(culture.TwoLetterISOLanguageName, out rules) ||
+                    s_localeRules.TryGetValue(culture.ThreeLetterISOLanguageName, out rules))
                 {
                     break;
                 }
             }
+
             if (rules != null)
             {
                 return rules.Select(num);
             }
+
             return "other";
+        }
+
+        public static string Select(IEnumerable<string> locales, string num)
+        {
+            return Select(locales.Select(l => new CultureInfo(l)), num);
+        }
+
+        public static string Select(CultureInfo culture, string num)
+        {
+            return Select(Enumerable.Repeat(culture, 1), num);
         }
 
         public static string Select(string locale, string num)
         {
-            return Select(Enumerable.Repeat(locale, 1), num);
+            return Select(new CultureInfo(locale), num);
         }
     }
 }

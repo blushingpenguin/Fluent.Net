@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Fluent.Net.Test
 {
@@ -203,7 +204,7 @@ namespace Fluent.Net.Test
         public void TestFluentDateTime()
         {
             var dt = new FluentDateTime(new DateTime(2009, 01, 02));
-            var ctx = new MessageContext("en-US");
+            var ctx = new MessageContext(new CultureInfo("en-US", useUserOverride: false));
             dt.Format(ctx).Should().Be("1/2/2009 12:00:00 AM");
             dt.Match(ctx, new FluentDateTime(new DateTime(2009, 01, 02))).Should().BeTrue();
             dt.Match(ctx, new FluentDateTime(new DateTime(2009, 01, 03))).Should().BeFalse();

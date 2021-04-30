@@ -14,360 +14,6 @@ namespace Fluent.Net
         public IDictionary<string, Resolver.ExternalFunction> Functions { get; set; }
     }
 
-    static class BuiltIns
-    {
-        public static FluentType Number(IList<object> args, IDictionary<string, object> options)
-        {
-            // TODO: add to errors?  what we doin here?
-            if (args.Count != 1)
-            {
-                throw new Exception("Too many arguments to NUMBER() function");
-            }
-            if (args[0].GetType() != typeof(FluentNumber))
-            {
-                throw new Exception("NUMBER() expected an argument of type FluentNumber");
-            }
-            return (FluentNumber)args[0];
-        }
-
-        public static FluentType DateTime(IList<object> args, IDictionary<string, object> options)
-        {
-            if (args.Count != 1)
-            {
-                throw new Exception("Too many arguments to DATETIME() function");
-            }
-            if (args[0].GetType() != typeof(FluentDateTime))
-            {
-                throw new Exception("DATETIME() expected an argument of type FluentDateTime");
-            }
-            return (FluentDateTime)args[0];
-        }
-    }
-
-    public class ResolverEnvironment
-    {
-        public ICollection<FluentError> Errors { get; set; }
-        public IDictionary<string, object> Arguments { get; set; }
-        public MessageContext Context { get; set; }
-        public HashSet<Pattern> Dirty { get; set; } = new HashSet<Pattern>();
-    }
-
-    public abstract class FluentError
-    {
-        public string Message { get; set; }
-
-        public FluentError(string message)
-        {
-            Message = message;
-        }
-    }
-
-    class RangeError : FluentError
-    {
-        public RangeError(string message) :
-            base(message)
-        {
-        }
-    }
-
-    class TypeError : FluentError
-    {
-        public TypeError(string message) :
-            base(message)
-        {
-        }
-    }
-
-    class ReferenceError : FluentError
-    {
-        public ReferenceError(string message) :
-            base(message)
-        {
-        }
-    }
-
-    class OverrideError : ParseException
-    {
-        public OverrideError(string message) :
-            base(message)
-        {
-        }
-    }
-
-    public interface IFluentType
-    {
-        string Value { get; set; }
-        string Format(MessageContext ctx);
-        bool Match(MessageContext ctx, object obj);
-    }
-
-    /**
-     * The `FluentType` class is the base of Fluent's type system.
-     *
-     * Fluent types wrap JavaScript values and store additional configuration for
-     * them, which can then be used in the `toString` method together with a proper
-     * `Intl` formatter.
-     */
-    public abstract class FluentType : IFluentType
-    {
-        public string Value { get; set; }
-
-        /**
-         * Create an `FluentType` instance.
-         *
-         * @param   {Any}    value - JavaScript value to wrap.
-         * @param   {Object} opts  - Configuration.
-         * @returns {FluentType}
-         */
-        public FluentType(string value = null)
-        {
-            Value = value;
-        }
-
-        /**
-         * Unwrap the raw value stored by this `FluentType`.
-         *
-         * @returns {Any}
-        public string ValueOf()
-        {
-            return Value;
-        }
-         */
-
-        /**
-         * Format this instance of `FluentType` to a string.
-         *
-         * Formatted values are suitable for use outside of the `MessageContext`.
-         * This method can use `Intl` formatters memoized by the `MessageContext`
-         * instance passed as an argument.
-         *
-         * @param   {MessageContext} [ctx]
-         * @returns {string}
-         */
-        public abstract string Format(MessageContext ctx);
-        public abstract bool Match(MessageContext ctx, object obj);
-    }
-
-    public class FluentNone : Node, IFluentType
-    {
-        public string Value { get; set; }
-
-        public FluentNone(string value = null)
-        {
-            Value = value;
-        }
-
-        public string Format(MessageContext ctx)
-        {
-            return !String.IsNullOrEmpty(Value) ? Value : "???";
-        }
-
-        public bool Match(MessageContext ctx, object other)
-        {
-            return other is FluentNone;
-        }
-    }
-
-    public class FluentString : FluentType
-    {
-        public FluentString(string value) :
-            base(value)
-        {
-        }
-
-        public override string Format(MessageContext ctx)
-        {
-            return Value;
-        }
-
-        public override bool Match(MessageContext ctx, object other)
-        {
-            if (other is FluentString str)
-            {
-                return str.Value == Value;
-            }
-            if (other is string s)
-            {
-                return s == Value;
-            }
-            return false;
-        }
-    }
-
-    public class FluentNumber : FluentType
-    {
-        double _numberValue;
-
-        public FluentNumber(string value) :
-            base(value)
-        {
-            _numberValue = Double.Parse(value);
-        }
-
-        public override string Format(MessageContext ctx)
-        {
-            // TODO: match js number formattiing here
-            // System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo(
-            return String.Format(ctx.Culture, "{0}", _numberValue);
-        }
-
-        /**
-         * Compare the object with another instance of a FluentType.
-         *
-         * @param   {MessageContext} ctx
-         * @param   {FluentType}     other
-         * @returns {bool}
-         */
-        public override bool Match(MessageContext ctx, object other)
-        {
-            if (other is FluentNumber n)
-            {
-                return _numberValue == n._numberValue;
-            }
-            if (other is double d)
-            {
-                return _numberValue == d;
-            }
-            if (other is float f)
-            {
-                return (float)_numberValue == f;
-            }
-            if (other is decimal dec)
-            {
-                return _numberValue == (double)dec;
-            }
-            if (other is sbyte sb)
-            {
-                return _numberValue == sb;
-            }
-            if (other is short s)
-            {
-                return _numberValue == s;
-            }
-            if (other is int i)
-            {
-                return _numberValue == i;
-            }
-            if (other is long l)
-            {
-                return _numberValue == l;
-            }
-            if (other is byte b)
-            {
-                return _numberValue == b;
-            }
-            if (other is ushort us)
-            {
-                return _numberValue == us;
-            }
-            if (other is uint ui)
-            {
-                return _numberValue == ui;
-            }
-            if (other is ulong ul)
-            {
-                return _numberValue == ul;
-            }
-            return false;
-        }
-    }
-
-    public class FluentDateTime : FluentType
-    {
-        DateTime _dateValue;
-
-        public FluentDateTime(DateTime value) :
-            base(value.ToString("o"))
-        {
-            _dateValue = value;
-        }
-
-        public override string Format(MessageContext ctx)
-        {
-            // TODO: match js number formattiig here?
-            // System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo(
-            return String.Format(ctx.Culture, "{0}", _dateValue);
-        }
-
-        public override bool Match(MessageContext ctx, object other)
-        {
-            if (other is FluentDateTime d)
-            {
-                return _dateValue == d._dateValue;
-            }
-            if (other is DateTime dt)
-            {
-                return _dateValue == dt;
-            }
-            return false;
-        }
-    }
-
-    public class FluentSymbol : FluentType
-    {
-        public FluentSymbol(string value) :
-            base(value)
-        {
-        }
-
-        public override string Format(MessageContext ctx)
-        {
-            return Value;
-        }
-
-        /**
-         * Compare the object with another instance of a FluentType.
-         *
-         * @param   {MessageContext} ctx
-         * @param   {FluentType}     other
-         * @returns {bool}
-         */
-        public override bool Match(MessageContext ctx, object other)
-        {
-            if (other is FluentSymbol symbol)
-            {
-                return Value == symbol.Value;
-            }
-            else if (other is string str)
-            {
-                return Value == str;
-            }
-            else if (other is FluentString fstr)
-            {
-                return Value == fstr.Value;
-            }
-            else if (other is FluentNumber fnum)
-            {
-                return Value == Plural.LocaleRules.Select(ctx.Locales, fnum.Value);
-            }
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Fluent Resource is a structure storing a map
-    /// of localization entries.
-    /// </summary>
-    public class FluentResource
-    {
-        public IDictionary<string, Message> Entries { get; }
-        public IList<ParseException> Errors { get; }
-
-        public FluentResource(IDictionary<string, Message> entries,
-            IList<ParseException> errors)
-        {
-            Entries = entries;
-            Errors = errors;
-        }
-
-        public static FluentResource FromReader(TextReader reader)
-        {
-            var parser = new RuntimeParser();
-            var resource = parser.GetResource(reader);
-            return new FluentResource(resource.Entries, resource.Errors);
-        }
-    }
-
     /// <summary>
     /// Message contexts are single-language stores of translations.  They are
     /// responsible for parsing translation resources in the Fluent syntax and can
@@ -385,9 +31,14 @@ namespace Fluent.Net
     {
         readonly static IDictionary<string, Resolver.ExternalFunction> s_emptyFunctions = new
             Dictionary<string, Resolver.ExternalFunction>();
-        public IEnumerable<string> Locales { get; private set; }
-        internal IDictionary<string, Message> _messages = new Dictionary<string, Message>();
-        internal IDictionary<string, Message> _terms = new Dictionary<string, Message>();
+        
+        public IReadOnlyList<CultureInfo> Cultures { get; }
+
+        [Obsolete("Access Cultures instead")]
+        public IEnumerable<string> Locales => Cultures.Select(c => c.IetfLanguageTag);
+        
+        internal Dictionary<string, Message> _messages = new Dictionary<string, Message>();
+        internal Dictionary<string, Message> _terms = new Dictionary<string, Message>();
         public Func<string, string> Transform { get; private set; }
         public bool UseIsolating { get; private set; } = true;
         public IDictionary<string, Resolver.ExternalFunction> Functions { get; private set; }
@@ -430,36 +81,40 @@ namespace Fluent.Net
         public MessageContext(
             IEnumerable<string>     locales, 
             MessageContextOptions   options = null
-        )
+        ) : this(locales.Select(l => new CultureInfo(l)), options)
         {
-            Locales = locales;
-            Culture = new CultureInfo(Locales.First());
+        }
+
+        public MessageContext(IEnumerable<CultureInfo> cultures, MessageContextOptions options = null)
+        {
+            Cultures = cultures.ToArray();
+            Culture = Cultures[0];
             if (options != null)
             {
                 UseIsolating = options.UseIsolating;
             }
             Transform = options?.Transform ?? NoOpTransform;
-            Functions = options?.Functions ?? s_emptyFunctions;
+            Functions = new Dictionary<string, Resolver.ExternalFunction>(options?.Functions ?? s_emptyFunctions);
         }
-
+        
+        public MessageContext(
+            CultureInfo culture,
+            MessageContextOptions options = null
+        ) : this(new [] { culture }, options)
+        {
+        }
+        
         public MessageContext(
             string locale,
             MessageContextOptions options = null
-        ) : this(new string[] { locale }, options)
+        ) : this(new CultureInfo(locale), options)
         {
         }
-
-
-
+        
         /// <summary>
-        /// Return an iterator over public `[id, message]` pairs.
-        ///</summary>
-        /// @returns {Iterator}
-        ///
-        IEnumerator<KeyValuePair<string, Message>> Messages
-        {
-            get { return _messages.GetEnumerator(); }
-        }
+        /// All available messages in the context.
+        /// </summary>
+        private IReadOnlyDictionary<string, Message> Messages => _messages;
 
         /// <summary>
         /// Check if a message is present in the context.
@@ -578,7 +233,7 @@ namespace Fluent.Net
                             $"Attempt to override an existing term: \"{entry.Key}\""));
                         continue;
                     }
-                    _terms.Add(entry);
+                    _terms.Add(entry.Key, entry.Value);
                 }
                 else
                 {
@@ -588,7 +243,7 @@ namespace Fluent.Net
                             $"Attempt to override an existing message: \"{entry.Key}\""));
                         continue;
                     }
-                    _messages.Add(entry);
+                    _messages.Add(entry.Key, entry.Value);
                 }
             }
             return errors;
