@@ -11,7 +11,7 @@ The syntax used for describing translations is easy to read and understand.  At
 the same time it allows, when necessary, to represent complex concepts from
 natural languages like gender, plurals, conjugations, and others.
 
-A fully working sample project is included [here][(https://github.com/blushingpenguin/Fluent.Net/tree/master/Fluent.Net.SimpleExample).
+A fully working sample project is included as [Fluent.Net.SimpleExample](https://github.com/blushingpenguin/Fluent.Net/tree/master/Fluent.Net.SimpleExample).
 
 ## Packages ##
 
@@ -38,7 +38,9 @@ FTL is designed to be simple to read, but at the same time allows to represent
 complex concepts from natural languages like gender, plurals, conjugations,
 and others.
 
-    hello-user = Hello, { $username }!
+```Fluent
+hello-user = Hello, { $username }!
+```
 
 [Read the Fluent Syntax Guide][] in order to learn more about the syntax.  If
 you're a tool author you may be interested in the formal [EBNF grammar][].
@@ -67,8 +69,10 @@ feedback.
 
 Hacking on `Fluent.Net` is easy! To quickly get started clone the repo:
 
-    git clone https://github.com/blushingpenguin/Fluent.Net.git
-    cd Fluent.Net
+```sh
+git clone https://github.com/blushingpenguin/Fluent.Net.git
+cd Fluent.Net
+```
 
 To compile the code and run the tests just open the solution in
 Visual Studio 2017 Community Edition.  To generate a code coverage report
