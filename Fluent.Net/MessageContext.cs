@@ -196,12 +196,13 @@ namespace Fluent.Net
 
     public class FluentNumber : FluentType
     {
-        double _numberValue;
+        readonly double _numberValue;
 
         public FluentNumber(string value) :
             base(value)
         {
-            _numberValue = Double.Parse(value);
+            if (double.TryParse(value, NumberStyles.Any, NumberFormatInfo.InvariantInfo, out var numberValue))
+                _numberValue = numberValue;
         }
 
         public override string Format(MessageContext ctx)
