@@ -1,4 +1,4 @@
-[![ci.appveyor.com](https://ci.appveyor.com/api/projects/status/github/blushingpenguin/Fluent.Net?branch=master&svg=true)](https://ci.appveyor.com/api/projects/status/github/blushingpenguin/Fluent.Net?branch=master&svg=true)
+[![ci.appveyor.com](https://ci.appveyor.com/api/projects/status/github/blushingpenguin/Fluent.Net?branch=master&svg=true)](https://ci.appveyor.com/project/blushingpenguin/fluent-net)
 [![codecov.io](https://codecov.io/gh/blushingpenguin/Fluent.Net/coverage.svg?branch=master)](https://codecov.io/gh/blushingpenguin/Fluent.Net?branch=master)
 
 # Fluent.Net #
