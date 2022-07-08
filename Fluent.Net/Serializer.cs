@@ -25,8 +25,8 @@ namespace Fluent.Net
         {
             HasEntries = 1
         };
-        
-        bool _withJunk;
+
+        private readonly bool _withJunk;
 
         public Serializer(bool withJunk = false)
         {

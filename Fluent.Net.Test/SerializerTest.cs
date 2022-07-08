@@ -38,26 +38,22 @@ namespace Fluent.Net.Test
             };
 
             var serializer = new Serializer();
-            using (var sw = new StringWriter())
-            {
-                serializer.Serialize(sw, input);
-                string actual = sw.ToString();
-                string expected = "foo = Foo\n";
-                actual.Should().Be(expected);
-            }
+            using var sw = new StringWriter();
+            serializer.Serialize(sw, input);
+            string actual = sw.ToString();
+            string expected = "foo = Foo\n";
+            actual.Should().Be(expected);
         }
 
         static string Pretty(string text)
         {
-            using (var sr = new StringReader(text))
-            using (var sw = new StringWriter())
-            {
-                var parser = new Parser();
-                var resource = parser.Parse(sr);
-                var serializer = new Serializer();
-                serializer.Serialize(sw, resource);
-                return sw.ToString();
-            }
+            using var sr = new StringReader(text);
+            using var sw = new StringWriter();
+            var parser = new Parser();
+            var resource = parser.Parse(sr);
+            var serializer = new Serializer();
+            serializer.Serialize(sw, resource);
+            return sw.ToString();
         }
 
         [Test]
@@ -67,10 +63,8 @@ namespace Fluent.Net.Test
 
             Action a = () =>
             {
-                using (var sw = new StringWriter())
-                {
-                    serializer.Serialize(sw, null);
-                }
+                using var sw = new StringWriter();
+                serializer.Serialize(sw, null);
             };
             a.Should().Throw<ArgumentNullException>();
 
@@ -640,22 +634,20 @@ namespace Fluent.Net.Test
 
         static string PrettyExpr(string text)
         {
-            using (var sr = new StringReader(text))
-            using (var sw = new StringWriter())
-            {
-                var parser = new Parser();
-                var entry = parser.ParseEntry(sr);
-                entry.Should().BeOfType<Ast.Message>();
-                var message = (Ast.Message)entry;
-                message.Value.Should().BeOfType<Ast.Pattern>();
-                var pattern = (Ast.Pattern)message.Value;
-                pattern.Elements.Count.Should().BeGreaterThan(0);
-                pattern.Elements[0].Should().BeOfType<Ast.Placeable>();
-                var placeable = (Ast.Placeable)pattern.Elements[0];
-                var serializer = new Serializer();
-                serializer.SerializeExpression(sw, placeable.Expression);
-                return sw.ToString();
-            }
+            using var sr = new StringReader(text);
+            using var sw = new StringWriter();
+            var parser = new Parser();
+            var entry = parser.ParseEntry(sr);
+            entry.Should().BeOfType<Ast.Message>();
+            var message = (Ast.Message)entry;
+            message.Value.Should().BeOfType<Ast.Pattern>();
+            var pattern = (Ast.Pattern)message.Value;
+            pattern.Elements.Count.Should().BeGreaterThan(0);
+            pattern.Elements[0].Should().BeOfType<Ast.Placeable>();
+            var placeable = (Ast.Placeable)pattern.Elements[0];
+            var serializer = new Serializer();
+            serializer.SerializeExpression(sw, placeable.Expression);
+            return sw.ToString();
         }
 
         [Test]

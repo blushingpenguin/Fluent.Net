@@ -70,10 +70,12 @@ namespace Fluent.Net.Test
         [Test]
         public void AddingDuplicateItemsDoesNotChangeCount()
         {
-            var set = new OrderedSet<string>();
-            set.Add("beta");
-            set.Add("alpha");
-            set.Add("gamma");
+            var set = new OrderedSet<string>
+            {
+                "beta",
+                "alpha",
+                "gamma"
+            };
             set.Count.Should().Be(3);
             set.Add("beta");
             set.Count.Should().Be(3);
@@ -85,12 +87,14 @@ namespace Fluent.Net.Test
         [Test]
         public void AddingItemsPreservesOrder()
         {
-            var set = new OrderedSet<string>();
-            set.Add("beta");
-            set.Add("alpha");
-            set.Add("gamma");
-            set.Add("epsilon");
-            set.Add("delta");
+            var set = new OrderedSet<string>
+            {
+                "beta",
+                "alpha",
+                "gamma",
+                "epsilon",
+                "delta"
+            };
 
             var copy = new List<string>(set);
             copy.Should().BeEquivalentTo(
@@ -101,15 +105,17 @@ namespace Fluent.Net.Test
         [Test]
         public void AddingDuplicateItemsPreservesOrder()
         {
-            var set = new OrderedSet<int>();
-            set.Add(40);
-            set.Add(6);
-            set.Add(4);
-            set.Add(9);
-            set.Add(40);
-            set.Add(4);
-            set.Add(9);
-            set.Add(9);
+            var set = new OrderedSet<int>
+            {
+                40,
+                6,
+                4,
+                9,
+                40,
+                4,
+                9,
+                9
+            };
 
             var copy = new List<int>(set);
             copy.Should().BeEquivalentTo(

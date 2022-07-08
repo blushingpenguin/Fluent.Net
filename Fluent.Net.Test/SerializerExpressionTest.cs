@@ -9,22 +9,18 @@ namespace Fluent.Net.Test
     {
         static string Pretty(string text)
         {
-            using (var sr = new StringReader(text))
-            {
-                var entry = new Parser().ParseEntry(sr);
-                entry.Should().BeAssignableTo<Ast.MessageTermBase>();
-                var message = (Ast.MessageTermBase)entry;
-                message.Value.Should().BeOfType(typeof(Ast.Pattern));
-                var pattern = (Ast.Pattern)message.Value;
-                pattern.Elements.Count.Should().BeGreaterOrEqualTo(1);
-                pattern.Elements[0].Should().BeOfType(typeof(Ast.Placeable));
-                var placeable = (Ast.Placeable)pattern.Elements[0];
-                using (var sw = new StringWriter())
-                {
-                    new Serializer().SerializeExpression(sw, placeable.Expression);
-                    return sw.ToString();
-                }
-            }
+            using var sr = new StringReader(text);
+            var entry = new Parser().ParseEntry(sr);
+            entry.Should().BeAssignableTo<Ast.MessageTermBase>();
+            var message = (Ast.MessageTermBase)entry;
+            message.Value.Should().BeOfType(typeof(Ast.Pattern));
+            var pattern = (Ast.Pattern)message.Value;
+            pattern.Elements.Count.Should().BeGreaterOrEqualTo(1);
+            pattern.Elements[0].Should().BeOfType(typeof(Ast.Placeable));
+            var placeable = (Ast.Placeable)pattern.Elements[0];
+            using var sw = new StringWriter();
+            new Serializer().SerializeExpression(sw, placeable.Expression);
+            return sw.ToString();
         }
 
         [Test]
@@ -33,10 +29,8 @@ namespace Fluent.Net.Test
             var serializer = new Serializer();
             Action a = () =>
             {
-                using (var sw = new StringWriter())
-                {
-                    serializer.SerializeExpression(sw, null);
-                }
+                using var sw = new StringWriter();
+                serializer.SerializeExpression(sw, null);
             };
             a.Should().Throw<ArgumentNullException>();
 

@@ -9,17 +9,15 @@ namespace Fluent.Net.SimpleExample
         static MessageContext GetMessages(string lang)
         {
             string ftlPath = Path.Combine("..", "..", "..", $"{lang}.ftl");
-            using (var sr = new StreamReader(ftlPath))
+            using var sr = new StreamReader(ftlPath);
+            var options = new MessageContextOptions { UseIsolating = false };
+            var mc = new MessageContext(lang, options);
+            var errors = mc.AddMessages(sr);
+            foreach (var error in errors)
             {
-                var options = new MessageContextOptions { UseIsolating = false };
-                var mc = new MessageContext(lang, options);
-                var errors = mc.AddMessages(sr);
-                foreach (var error in errors)
-                {
-                    Console.WriteLine(error);
-                }
-                return mc;
+                Console.WriteLine(error);
             }
+            return mc;
         }
 
         static void RunTest(string lang)
@@ -27,7 +25,7 @@ namespace Fluent.Net.SimpleExample
             var messageContext = GetMessages(lang);
             var translator = new TranslationService(new MessageContext[] { messageContext });
 
-            Console.WriteLine($"{lang}:");            
+            Console.WriteLine($"{lang}:");
             Console.WriteLine($"tabs-close-button = {translator.GetString("tabs-close-button")}");
 
             Console.WriteLine("tabs-close-tooltip ($tabCount = 1) = " +
@@ -46,7 +44,7 @@ namespace Fluent.Net.SimpleExample
             Console.WriteLine();
         }
 
-        static void Main(string[] args)
+        static void Main()
         {
             RunTest("en");
             RunTest("it");

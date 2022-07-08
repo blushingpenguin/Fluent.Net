@@ -142,7 +142,7 @@ namespace Fluent.Net.Test
         {
             var obj = (JObject)ToJson((Expression)se);
             obj["type"] = "SelectExpression";
-            obj["selector"] = se.Selector == null ? null : 
+            obj["selector"] = se.Selector == null ? null :
                 ToJson((dynamic)se.Selector);
             obj["variants"] = se.Variants == null ? new JArray() :
                 new JArray(se.Variants.Select(x => ToJson(x)));
@@ -269,10 +269,12 @@ namespace Fluent.Net.Test
 
         public static JToken ToJson(Span span)
         {
-            var obj = new JObject();
-            obj["type"] = "Span";
-            obj["start"] = span.Start.Offset;
-            obj["end"] = span.End.Offset;
+            var obj = new JObject
+            {
+                ["type"] = "Span",
+                ["start"] = span.Start.Offset,
+                ["end"] = span.End.Offset
+            };
             return obj;
         }
 

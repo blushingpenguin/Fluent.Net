@@ -10,7 +10,7 @@ namespace Fluent.Net.LangNeg
         /// This list is curated by the maintainers of Project Fluent and is
         /// intended to be used in place of the full likelySubtags list in use cases
         /// where full list cannot be (for example, due to the size).
-        /// 
+        ///
         /// This version of the list is based on CLDR 30.0.3.
         /// </summary>
         static readonly Dictionary<string, string> s_likelySubtagsMin =
@@ -57,8 +57,7 @@ namespace Fluent.Net.LangNeg
 
         public static Locale GetLikelySubtagsMin(string tag)
         {
-            string full;
-            if (s_likelySubtagsMin.TryGetValue(tag, out full))
+            if (s_likelySubtagsMin.TryGetValue(tag, out string full))
             {
                 return new Locale(full);
             }

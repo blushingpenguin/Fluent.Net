@@ -7,7 +7,7 @@ namespace Fluent.Net.SimpleExample
 {
     public class TranslationService
     {
-        IEnumerable<MessageContext> _contexts;
+        private readonly IEnumerable<MessageContext> _contexts;
 
         public TranslationService(IEnumerable<MessageContext> contexts)
         {

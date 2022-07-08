@@ -166,7 +166,7 @@ namespace Fluent.Net.Test
                 JObject attrs = new JObject();
                 foreach (var attribute in message.Attributes)
                 {
-                    // The javascript version produces "att-name": "att-value" for simple 
+                    // The javascript version produces "att-name": "att-value" for simple
                     // string values, and "att-name": { val: [ "one", "two" ] } for 'complex'
                     // patterns.  The object wrapping the array ({val:[]}) is unnecessary,
                     // but we need to produce it here for the tests to get the expected
@@ -178,8 +178,10 @@ namespace Fluent.Net.Test
                     }
                     else if (attribute.Value is Pattern p)
                     {
-                        var valueObject = new JObject();
-                        valueObject.Add("val", ToJson(p.Elements));
+                        var valueObject = new JObject
+                        {
+                            { "val", ToJson(p.Elements) }
+                        };
                         attributeValue = valueObject;
                     }
                     else

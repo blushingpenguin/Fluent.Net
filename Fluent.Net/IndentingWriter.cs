@@ -5,7 +5,7 @@ namespace Fluent.Net
 {
     class IndentingWriter
     {
-        TextWriter _output;
+        private readonly TextWriter _output;
         private int _indents = 0;
         private bool _lastWasNL = true;
 

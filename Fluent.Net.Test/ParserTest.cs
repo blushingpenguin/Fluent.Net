@@ -14,13 +14,11 @@ namespace Fluent.Net.Test
         void ParseAndCheck(string ftl, Ast.SyntaxNode expected,
             bool withSpans = false)
         {
-            using (var sr = new StringReader(Ftl(ftl)))
-            {
-                var ps = new Parser(withSpans);
-                var actual = ps.ParseEntry(sr);
-                actual.Should().BeEquivalentTo(expected,
-                    options => options.RespectingRuntimeTypes());
-            }
+            using var sr = new StringReader(Ftl(ftl));
+            var ps = new Parser(withSpans);
+            var actual = ps.ParseEntry(sr);
+            actual.Should().BeEquivalentTo(expected,
+                options => options.RespectingRuntimeTypes());
         }
 
         [Test]
@@ -176,13 +174,11 @@ namespace Fluent.Net.Test
                     new Position(6, 1, 7))
             });
 
-            using (var sr = new StringReader(ftl))
-            {
-                var ps = new Parser(true);
-                var message = ps.ParseEntry(sr);
-                message.Should().BeEquivalentTo(output,
-                    options => options.RespectingRuntimeTypes());
-            }
+            using var sr = new StringReader(ftl);
+            var ps = new Parser(true);
+            var message = ps.ParseEntry(sr);
+            message.Should().BeEquivalentTo(output,
+                options => options.RespectingRuntimeTypes());
         }
 
         [Test]
@@ -209,12 +205,12 @@ namespace Fluent.Net.Test
                         {
                             Elements = new List<Ast.SyntaxNode>()
                             {
-                                new Ast.StringLiteral() 
-                                { 
+                                new Ast.StringLiteral()
+                                {
                                     Span = new Ast.Span(
                                         new Position(22, 2, 12),
                                         new Position(26, 2, 16)),
-                                    Value = "attr" 
+                                    Value = "attr"
                                 },
                             },
                             Span = new Ast.Span(
@@ -237,8 +233,8 @@ namespace Fluent.Net.Test
                 {
                     Elements = new List<Ast.SyntaxNode>()
                     {
-                        new Ast.StringLiteral() 
-                        { 
+                        new Ast.StringLiteral()
+                        {
                             Span = new Ast.Span(
                                 new Position(7, 1, 8),
                                 new Position(10, 1, 11)),
@@ -253,13 +249,11 @@ namespace Fluent.Net.Test
                     new Position(0, 1, 1),
                     new Position(26, 2, 16))
             };
-            using (var sr = new StringReader(Ftl(ftl)))
-            {
-                var ps = new Parser(true);
-                var message = ps.ParseEntry(sr);
-                message.Should().BeEquivalentTo(output,
-                    options => options.RespectingRuntimeTypes());
-            }
+            using var sr = new StringReader(Ftl(ftl));
+            var ps = new Parser(true);
+            var message = ps.ParseEntry(sr);
+            message.Should().BeEquivalentTo(output,
+                options => options.RespectingRuntimeTypes());
         }
 
         [Test]
@@ -409,14 +403,12 @@ namespace Fluent.Net.Test
                 }
             };
 
-            using (var sr = new StringReader(Ftl(ftl)))
-            {
-                var ps = new Parser(true);
-                var message = ps.Parse(sr);
-                // Console.WriteLine(AstToJson.ToJson(message));
-                message.Should().BeEquivalentTo(output, options =>
-                    options.RespectingRuntimeTypes());
-            }
+            using var sr = new StringReader(Ftl(ftl));
+            var ps = new Parser(true);
+            var message = ps.Parse(sr);
+            // Console.WriteLine(AstToJson.ToJson(message));
+            message.Should().BeEquivalentTo(output, options =>
+                options.RespectingRuntimeTypes());
         }
 
         [Test]
@@ -434,8 +426,7 @@ namespace Fluent.Net.Test
 
         public static StructureTestData ReadStructureFixture(string jsonPath, string json)
         {
-            string ftlPath = jsonPath.Substring(0,
-                jsonPath.LastIndexOf('.') + 1) + "ftl";
+            string ftlPath = jsonPath[..(jsonPath.LastIndexOf('.') + 1)] + "ftl";
             return new StructureTestData()
             {
                 TestName = Path.GetFileNameWithoutExtension(jsonPath),
@@ -453,28 +444,26 @@ namespace Fluent.Net.Test
         [Test, TestCaseSource("ReadStructureFixtures")]
         public void StructureTest(StructureTestData testData)
         {
-            using (var sr = new StringReader(testData.Ftl))
+            using var sr = new StringReader(testData.Ftl);
+            var resource = new Parser().Parse(sr);
+            var resourceJson = AstToJson.ToJson(resource);
+            bool resultsEqual = JToken.DeepEquals(resourceJson, testData.Expected);
+            if (!resultsEqual)
             {
-                var resource = new Parser().Parse(sr);
-                var resourceJson = AstToJson.ToJson(resource);
-                bool resultsEqual = JToken.DeepEquals(resourceJson, testData.Expected);
-                if (!resultsEqual)
-                {
-                    Console.WriteLine("parsed =");
-                    Console.WriteLine(resourceJson);
-                    Console.WriteLine("expected =");
-                    Console.WriteLine(testData.Expected);
-                    var jdp = new JsonDiffPatch();
-                    var diff = jdp.Diff(resourceJson, testData.Expected);
-                    Console.WriteLine("diff =");
-                    Console.WriteLine(diff);
-                }
-                resultsEqual.Should().BeTrue();
-
-                // doesn't seem to work -- just returns true
-                // resourceJson.Should().BeEquivalentTo(testData.Expected,
-                //    options => options.AllowingInfiniteRecursion().RespectingRuntimeTypes());
+                Console.WriteLine("parsed =");
+                Console.WriteLine(resourceJson);
+                Console.WriteLine("expected =");
+                Console.WriteLine(testData.Expected);
+                var jdp = new JsonDiffPatch();
+                var diff = jdp.Diff(resourceJson, testData.Expected);
+                Console.WriteLine("diff =");
+                Console.WriteLine(diff);
             }
+            resultsEqual.Should().BeTrue();
+
+            // doesn't seem to work -- just returns true
+            // resourceJson.Should().BeEquivalentTo(testData.Expected,
+            //    options => options.AllowingInfiniteRecursion().RespectingRuntimeTypes());
         }
 
         public static IEnumerable<BehaviourTestData> ReadBehaviourFixtures()
@@ -486,18 +475,16 @@ namespace Fluent.Net.Test
         [Test, TestCaseSource("ReadBehaviourFixtures")]
         public void BehaviourTest(BehaviourTestData testData)
         {
-            using (var sr = new StringReader(testData.Source))
-            {
-                var parser = new Parser();
-                var ast = parser.Parse(sr);
-                //var wotst
-                var actual = String.Join("\n",
-                    ast.Body
-                        .Where(x => x is Ast.Junk)
-                        .SelectMany(y => ((Ast.Junk)y).Annotations
-                            .Select(z => SerializeAnnotation(z)))) + "\n";
-                actual.Should().Be(testData.Expected);
-            }
+            using var sr = new StringReader(testData.Source);
+            var parser = new Parser();
+            var ast = parser.Parse(sr);
+            //var wotst
+            var actual = String.Join("\n",
+                ast.Body
+                    .Where(x => x is Ast.Junk)
+                    .SelectMany(y => ((Ast.Junk)y).Annotations
+                        .Select(z => SerializeAnnotation(z)))) + "\n";
+            actual.Should().Be(testData.Expected);
         }
 
         public static IEnumerable<StructureTestData> ReadReferenceFixtures()
@@ -515,12 +502,12 @@ namespace Fluent.Net.Test
             {
                 // Call arguments edge-cases.
                 "call_expressions",
-                
+
                 // The tooling parser rejects variant keys which contain leading whitespace.
                 // There's even a behavior fixture for this; it must have been a
                 // deliberate decision.
                 "select_expressions",
-                
+
                 // Broken Attributes break the entire Entry right now.
                 // https://github.com/projectfluent/fluent.js/issues/237
                 "leading_dots",
@@ -532,31 +519,29 @@ namespace Fluent.Net.Test
                 Assert.Ignore();
             }
 
-            using (var sr = new StringReader(testData.Ftl))
+            using var sr = new StringReader(testData.Ftl);
+            var resource = new Parser(false).Parse(sr);
+
+            // Ignore Junk which is parsed differently by the tooling parser, and
+            // which doesn't carry spans nor annotations in the reference parser.
+            resource.Body = resource.Body.Where(x => !(x is Ast.Junk)).ToList();
+            testData.Expected["body"] = new JArray(
+                ((JArray)testData.Expected["body"]).Where(x => x["type"].ToString() != "Junk"));
+
+            var resourceJson = AstToJson.ToJson(resource);
+            bool resultsEqual = JToken.DeepEquals(resourceJson, testData.Expected);
+            if (!resultsEqual)
             {
-                var resource = new Parser(false).Parse(sr);
-
-                // Ignore Junk which is parsed differently by the tooling parser, and
-                // which doesn't carry spans nor annotations in the reference parser.
-                resource.Body = resource.Body.Where(x => !(x is Ast.Junk)).ToList();
-                testData.Expected["body"] = new JArray(
-                    ((JArray)testData.Expected["body"]).Where(x => x["type"].ToString() != "Junk"));
-
-                var resourceJson = AstToJson.ToJson(resource);
-                bool resultsEqual = JToken.DeepEquals(resourceJson, testData.Expected);
-                if (!resultsEqual)
-                {
-                    Console.WriteLine("parsed =");
-                    Console.WriteLine(resourceJson);
-                    Console.WriteLine("expected =");
-                    Console.WriteLine(testData.Expected);
-                    var jdp = new JsonDiffPatch();
-                    var diff = jdp.Diff(resourceJson, testData.Expected);
-                    Console.WriteLine("diff =");
-                    Console.WriteLine(diff);
-                }
-                resultsEqual.Should().BeTrue();
+                Console.WriteLine("parsed =");
+                Console.WriteLine(resourceJson);
+                Console.WriteLine("expected =");
+                Console.WriteLine(testData.Expected);
+                var jdp = new JsonDiffPatch();
+                var diff = jdp.Diff(resourceJson, testData.Expected);
+                Console.WriteLine("diff =");
+                Console.WriteLine(diff);
             }
+            resultsEqual.Should().BeTrue();
         }
     }
 }

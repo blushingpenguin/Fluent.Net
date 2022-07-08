@@ -8,7 +8,7 @@
 
         public bool Match(string num)
         {
-            return Condition == null ? true : Condition.Match(num);
+            return Condition == null || Condition.Match(num);
         }
     }
 }

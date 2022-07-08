@@ -3,10 +3,10 @@ using System.IO;
 
 namespace Fluent.Net.SyntaxTest.Test
 {
-    public class ConsoleCapture : IDisposable
+    public sealed class ConsoleCapture : IDisposable
     {
-        StringWriter _output = new StringWriter();
-        TextWriter _savedOutput;
+        private readonly StringWriter _output = new();
+        private TextWriter _savedOutput;
 
         public ConsoleCapture()
         {

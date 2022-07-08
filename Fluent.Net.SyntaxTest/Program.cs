@@ -10,11 +10,11 @@ namespace Fluent.Net.SyntaxTest
         static int DuplicateCheck(string message, string file, Ast.Span span,
             Dictionary<string, Location> messages)
         {
-            Location loc;
-            if (!messages.TryGetValue(message, out loc))
+            if (!messages.TryGetValue(message, out Location loc))
             {
                 messages.Add(message,
-                    new Location() {
+                    new Location()
+                    {
                         File = file,
                         Position = span != null ? span.Start : Position.Start
                     });
@@ -132,7 +132,7 @@ namespace Fluent.Net.SyntaxTest
 
         internal static bool StartsWithBOM(byte[] buf, long offset, int length)
         {
-            return length > 3 && offset == 0 && 
+            return length > 3 && offset == 0 &&
                 buf[0] == 0xEF && buf[1] == 0xBB && buf[2] == 0xBF;
         }
 
@@ -183,8 +183,7 @@ namespace Fluent.Net.SyntaxTest
                     string set = Path.GetFileNameWithoutExtension(file)
                         .Replace("_", "-").ToLowerInvariant();
 
-                    Dictionary<string, Location> messages;
-                    if (!messageSets.TryGetValue(set, out messages))
+                    if (!messageSets.TryGetValue(set, out Dictionary<string, Location> messages))
                     {
                         messages = new Dictionary<string, Location>();
                         messageSets.Add(set, messages);
@@ -195,12 +194,10 @@ namespace Fluent.Net.SyntaxTest
                         errors += CheckNormalised(file);
                     }
 
-                    using (var sr = new StreamReader(file))
-                    {
-                        errors += useRuntime ?
-                            RuntimeParse(file, sr, messages) :
-                            Parse(file, sr, messages);
-                    }
+                    using var sr = new StreamReader(file);
+                    errors += useRuntime ?
+                        RuntimeParse(file, sr, messages) :
+                        Parse(file, sr, messages);
                 }
             }
             return errors;

@@ -44,8 +44,7 @@ namespace Fluent.Net
 
         public bool Remove(T item)
         {
-            LinkedListNode<T> entry;
-            if (_valuesByKey.TryGetValue(item, out entry))
+            if (_valuesByKey.TryGetValue(item, out LinkedListNode<T> entry))
             {
                 _valuesByKey.Remove(item);
                 _values.Remove(entry);

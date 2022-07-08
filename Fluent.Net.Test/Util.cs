@@ -6,8 +6,8 @@ namespace Fluent.Net.Test
 {
     static class Util
     {
-        static Regex s_blankRe = new Regex("^\\s*$");
-        static Regex s_blankCountRe = new Regex("^\\s*");
+        private readonly static Regex s_blankRe = new Regex("^\\s*$");
+        private readonly static Regex s_blankCountRe = new Regex("^\\s*");
 
         public static string Ftl(string input)
         {

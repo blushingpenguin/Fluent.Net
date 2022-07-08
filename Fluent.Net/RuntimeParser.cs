@@ -14,14 +14,14 @@ namespace Fluent.Net
 
     /// <summary>
     /// The `Parser` class is responsible for parsing FTL resources.
-    /// 
+    ///
     /// It's only public method is `getResource(source)` which takes an FTL string
     /// and returns a two element Array with an Object of entries generated from the
     /// source as the first element and an array of ParseException objects as the
     /// second.
-    /// 
+    ///
     /// This parser is optimized for runtime performance.
-    /// 
+    ///
     /// There is an equivalent of this parser in syntax/parser which is
     /// generating full AST which is useful for FTL tools.
     /// </summary>
@@ -33,8 +33,8 @@ namespace Fluent.Net
         FtlParserStream _stream;
         Dictionary<string, Message> _entries;
 
-        int CurrentPeek { get => _stream.CurrentPeek; } 
-        int Current { get => _stream.Current; } 
+        int CurrentPeek { get => _stream.CurrentPeek; }
+        int Current { get => _stream.Current; }
         bool CurrentPeekIs(int ch) => _stream.CurrentPeekIs(ch);
         string CurrentAsString() => _stream.CurrentAsString();
         int Next() => _stream.Next();
@@ -50,7 +50,7 @@ namespace Fluent.Net
 
         /// <summary>
         /// Parse FTL code into entries formattable by the MessageContext.
-        /// 
+        ///
         /// Given a string of FTL syntax, return a map of entries that can be passed
         /// to MessageContext.format and a list of errors encountered during parsing.
         /// </summary>
@@ -432,7 +432,7 @@ namespace Fluent.Net
                     continue;
                 }
                 // check if it's a valid escaped thing
-                if (Current == '\\') 
+                if (Current == '\\')
                 {
                     GetEscapedCharacter(buffer, new int[] { '{', '\\' });
                     continue;
@@ -465,8 +465,8 @@ namespace Fluent.Net
             if (buffer.Length > 0)
             {
                 extra = new StringLiteral()
-                { 
-                    Value = Parser.TrimRight(buffer.ToString()) 
+                {
+                    Value = Parser.TrimRight(buffer.ToString())
                 };
             }
             if (content.Count == 0)
@@ -518,7 +518,7 @@ namespace Fluent.Net
                 buffer.Append((char)ch);
                 return;
             }
-        
+
             if (ch == 'u')
             {
                 Next();
@@ -534,8 +534,7 @@ namespace Fluent.Net
                     sequence[i] = (char)ch;
                 }
                 var charCodeString = new String(sequence, 0, i);
-                int charCodeVal;
-                if (i != 4 || !TryParseHex(charCodeString, out charCodeVal))
+                if (i != 4 || !TryParseHex(charCodeString, out int charCodeVal))
                 {
                     throw Error($"Invalid Unicode escape sequence: \\u{charCodeString}");
                 }
@@ -560,7 +559,7 @@ namespace Fluent.Net
             {
                 _stream.ResetPeek(peekIndex);
                 _stream.SkipToPeek();
-                
+
                 var variantResult = GetVariants();
                 return new SelectExpression()
                 {
@@ -657,10 +656,10 @@ namespace Fluent.Net
                 Next();
                 var name = GetIdentifier();
                 Next();
-                return new GetAttribute() 
+                return new GetAttribute()
                 {
                     Id = messageReference,
-                    Name = name 
+                    Name = name
                 };
             }
 
@@ -708,7 +707,7 @@ namespace Fluent.Net
 
                 // MessageReference in this place may be an entity reference, like:
                 // `call(foo)`, or, if it's followed by `:` it will be a key-value pair.
-                if (!(exp is MessageReference))
+                if (!(exp is MessageReference reference))
                 {
                     args.Add(exp);
                 }
@@ -734,7 +733,7 @@ namespace Fluent.Net
                         {
                             args.Add(new NamedArgument()
                             {
-                                Name = ((MessageReference)exp).Name,
+                                Name = reference.Name,
                                 Value = val
                             });
 
@@ -775,7 +774,7 @@ namespace Fluent.Net
         /// <summary>
         /// Parses an FTL Number.
         /// </summary>
-        /// 
+        ///
         /// @returns {Object}
         Node GetNumber()
         {
@@ -849,7 +848,7 @@ namespace Fluent.Net
                 var key = GetIdentifier();
 
                 SkipInlineWs();
-                
+
                 if (Current != '=')
                 {
                     Error("Expected '='");

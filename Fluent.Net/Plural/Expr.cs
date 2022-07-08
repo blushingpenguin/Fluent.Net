@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Fluent.Net.Plural
 {
@@ -7,12 +8,14 @@ namespace Fluent.Net.Plural
         public Operand Operand { get; set; }
 
         // absolute value of the source number(integer and decimals).
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         decimal n(string num)
         {
             return Decimal.Parse(num);
         }
 
         // integer digits of n.
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         decimal i(string num)
         {
             int pos = num.IndexOf('.');
@@ -20,6 +23,7 @@ namespace Fluent.Net.Plural
         }
 
         // number of visible fraction digits in n, with trailing zeros.
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         decimal v(string num)
         {
             int pos = num.IndexOf('.');
@@ -36,6 +40,7 @@ namespace Fluent.Net.Plural
         }
 
         // number of visible fraction digits in n, without trailing zeros.
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         decimal w(string num)
         {
             int pos = num.IndexOf('.');
@@ -48,6 +53,7 @@ namespace Fluent.Net.Plural
         }
 
         // visible fractional digits in n, with trailing zeros.
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         decimal f(string num)
         {
             int pos = num.IndexOf('.');
@@ -59,6 +65,7 @@ namespace Fluent.Net.Plural
         }
 
         // visible fractional digits in n, without trailing zeros.
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         decimal t(string num)
         {
             int pos = num.IndexOf('.');

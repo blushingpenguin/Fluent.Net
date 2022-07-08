@@ -6,8 +6,8 @@ namespace Fluent.Net.Plural
 {
     public class Parser
     {
-        int _index = 0;
-        string _rule;
+        private int _index = 0;
+        private readonly string _rule;
 
         public Parser(string rule)
         {
@@ -324,8 +324,7 @@ namespace Fluent.Net.Plural
                 seenDot = seenDot || Current == '.';
             }
             var valString = buf.ToString();
-            decimal val;
-            if (!Decimal.TryParse(valString.ToString(), out val))
+            if (!Decimal.TryParse(valString.ToString(), out decimal val))
             {
                 Error($"Invalid decimal value {valString}");
             }
@@ -378,7 +377,6 @@ namespace Fluent.Net.Plural
         Samples Samples()
         {
             IList<Range<decimal>> integerSamples = null, decimalSamples = null;
-            var samples = new Samples();
             if (Current == '@' && Peek() == 'i' && Peek(2) == 'n' &&
                 Peek(3) == 't' && Peek(4) == 'e' && Peek(5) == 'g' &&
                 Peek(6) == 'e' && Peek(7) == 'r')
@@ -412,7 +410,7 @@ namespace Fluent.Net.Plural
             var rule = new Rule();
 
             SkipWhite();
-            // an empty condition is valid (contrary to the grammar, 
+            // an empty condition is valid (contrary to the grammar,
             // but the text / examples allow it)
             if (Current != -1 && Current != '@')
             {

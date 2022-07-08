@@ -7,20 +7,18 @@ namespace Fluent.Net.Test
 {
     public class SerializerPaddingTest : FtlTestBase
     {
-        void SerializeTwice(string input, string output = null)
+        void SerializeTwice(string input)
         {
             var serializer = new Serializer();
             var parser = new Parser();
 
-            Action Serialize = () =>
+            void Serialize()
             {
-                using (var sr = new StringReader(input))
-                using (var sw = new StringWriter())
-                {
-                    serializer.Serialize(sw, parser.Parse(sr));
-                    sw.ToString().Should().Be(input);
-                }
-            };
+                using var sr = new StringReader(input);
+                using var sw = new StringWriter();
+                serializer.Serialize(sw, parser.Parse(sr));
+                sw.ToString().Should().Be(input);
+            }
 
             Serialize();
 

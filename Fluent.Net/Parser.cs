@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,8 +12,7 @@ namespace Fluent.Net
     {
         const int Eof = ParserStream.Eof;
         internal static Regex s_fnName = new Regex("^[A-Z][A-Z_?-]*$", RegexOptions.Compiled);
-
-        bool _withSpans;
+        private readonly bool _withSpans;
 
         public Parser(bool withSpans = true)
         {
@@ -73,7 +73,7 @@ namespace Fluent.Net
                 // they should parse as standalone when they're followed by Junk.
                 // Consequently, we only attach Comments once we know that the Message
                 // or the Term parsed successfully.
-                if (entry is Ast.Comment comment && 
+                if (entry is Ast.Comment comment &&
                     blankLines == 0 && ps.Current != Eof)
                 {
                     // Stash the comment and decide what to do with it in the next pass.
@@ -98,7 +98,7 @@ namespace Fluent.Net
                     // In either case, the stashed comment has been dealt with; clear it.
                     lastComment = null;
                 }
-                
+
                 // No special logic for other types of entries.
                 entries.Add(entry);
             }
@@ -115,10 +115,10 @@ namespace Fluent.Net
 
         /// <summary>
         /// Parse the first Message or Term in `source`.
-        /// 
+        ///
         /// Skip all encountered comments and start parsing at the first Message or
         /// Term start. Return Junk if the parsing is not successful.
-        /// 
+        ///
         /// Preceding comments are ignored unless they contain syntax errors
         /// themselves, in which case Junk for the invalid comment is returned.
         /// </summary>
@@ -191,6 +191,7 @@ namespace Fluent.Net
             throw new ParseException("E0002");
         }
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         public Ast.BaseComment _GetComment(FtlParserStream ps)
         {
             // 0 - comment
@@ -250,6 +251,7 @@ namespace Fluent.Net
         public Ast.BaseComment GetComment(FtlParserStream ps) =>
             SpanWrapper(ps, _GetComment);
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.Entry _GetMessage(FtlParserStream ps)
         {
             var id = GetIdentifier(ps);
@@ -285,6 +287,7 @@ namespace Fluent.Net
         Ast.Entry GetMessage(FtlParserStream ps) =>
             SpanWrapper(ps, () => _GetMessage(ps));
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.Entry _GetTerm(FtlParserStream ps)
         {
             var id = GetTermIdentifier(ps);
@@ -292,7 +295,7 @@ namespace Fluent.Net
             ps.SkipInlineWs();
             ps.ExpectChar('=');
 
-            Ast.SyntaxNode value = null;
+            Ast.SyntaxNode value;
             if (ps.IsPeekValueStart())
             {
                 ps.SkipIndent();
@@ -314,6 +317,7 @@ namespace Fluent.Net
         Ast.Entry GetTerm(FtlParserStream ps) =>
             SpanWrapper(ps, _GetTerm);
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.Attribute _GetAttribute(FtlParserStream ps)
         {
             ps.ExpectChar('.');
@@ -332,7 +336,7 @@ namespace Fluent.Net
 
             throw new ParseException("E0012");
         }
-        
+
         Ast.Attribute GetAttribute(FtlParserStream ps) =>
             SpanWrapper(ps, _GetAttribute);
 
@@ -354,6 +358,7 @@ namespace Fluent.Net
             return attrs;
         }
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.Identifier _GetIdentifier(FtlParserStream ps)
         {
             var name = new StringBuilder();
@@ -371,6 +376,7 @@ namespace Fluent.Net
         Ast.Identifier GetIdentifier(FtlParserStream ps) =>
             SpanWrapper(ps, _GetIdentifier);
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.Identifier _GetTermIdentifier(FtlParserStream ps)
         {
             ps.ExpectChar('-');
@@ -398,6 +404,7 @@ namespace Fluent.Net
             return GetVariantName(ps);
         }
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.Variant _GetVariant(FtlParserStream ps, bool hasDefault)
         {
             bool defaultIndex = false;
@@ -410,7 +417,6 @@ namespace Fluent.Net
                 }
                 ps.Next();
                 defaultIndex = true;
-                hasDefault = true;
             }
 
             ps.ExpectChar('[');
@@ -463,6 +469,7 @@ namespace Fluent.Net
             return variants;
         }
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.VariantName _GetVariantName(FtlParserStream ps)
         {
             var name = new StringBuilder();
@@ -505,6 +512,7 @@ namespace Fluent.Net
             return num.ToString();
         }
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.NumberLiteral _GetNumber(FtlParserStream ps)
         {
             var num = new StringBuilder();
@@ -530,6 +538,7 @@ namespace Fluent.Net
         Ast.NumberLiteral GetNumber(FtlParserStream ps) =>
             SpanWrapper(ps, _GetNumber);
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.SyntaxNode _GetValue(FtlParserStream ps)
         {
             if (ps.CurrentIs('{'))
@@ -547,6 +556,7 @@ namespace Fluent.Net
         Ast.SyntaxNode GetValue(FtlParserStream ps) =>
             SpanWrapper(ps, _GetValue);
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.SyntaxNode _GetVariantList(FtlParserStream ps)
         {
             ps.ExpectChar('{');
@@ -560,6 +570,7 @@ namespace Fluent.Net
         Ast.SyntaxNode GetVariantList(FtlParserStream ps) =>
             SpanWrapper(ps, _GetVariantList);
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.Pattern _GetPattern(FtlParserStream ps)
         {
             var elements = new List<Ast.SyntaxNode>();
@@ -600,6 +611,7 @@ namespace Fluent.Net
         Ast.Pattern GetPattern(FtlParserStream ps) =>
             SpanWrapper(ps, _GetPattern);
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.TextElement _GetTextElement(FtlParserStream ps)
         {
             var buffer = new StringBuilder();
@@ -683,6 +695,7 @@ namespace Fluent.Net
                 next == Eof ? "" : ((char)next).ToString());
         }
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.Placeable _GetPlaceable(FtlParserStream ps)
         {
             ps.ExpectChar('{');
@@ -694,6 +707,7 @@ namespace Fluent.Net
         Ast.Placeable GetPlaceable(FtlParserStream ps) =>
             SpanWrapper(ps, _GetPlaceable);
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.SyntaxNode _GetExpression(FtlParserStream ps)
         {
             ps.SkipInlineWs();
@@ -762,6 +776,7 @@ namespace Fluent.Net
         Ast.SyntaxNode GetExpression(FtlParserStream ps) =>
             SpanWrapper(ps, _GetExpression);
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.SyntaxNode _GetSelectorExpression(FtlParserStream ps)
         {
             if (ps.CurrentIs('{'))
@@ -771,8 +786,7 @@ namespace Fluent.Net
 
             var literal = GetLiteral(ps);
 
-            var mtReference = literal as Ast.MessageTermReference;
-            if (mtReference == null)
+            if (!(literal is Ast.MessageTermReference mtReference))
             {
                 return literal;
             }
@@ -831,6 +845,7 @@ namespace Fluent.Net
         Ast.SyntaxNode GetSelectorExpression(FtlParserStream ps) =>
             SpanWrapper(ps, _GetSelectorExpression);
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.SyntaxNode _GetCallArg(FtlParserStream ps)
         {
             var exp = GetSelectorExpression(ps);
@@ -842,8 +857,7 @@ namespace Fluent.Net
                 return exp;
             }
 
-            var messageReference = exp as Ast.MessageReference;
-            if (messageReference == null)
+            if (!(exp is Ast.MessageReference messageReference))
             {
                 throw new ParseException("E0009");
             }
@@ -931,6 +945,7 @@ namespace Fluent.Net
             throw new ParseException("E0012");
         }
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.StringLiteral _GetString(FtlParserStream ps)
         {
             var val = new StringBuilder();
@@ -963,6 +978,7 @@ namespace Fluent.Net
         Ast.StringLiteral GetString(FtlParserStream ps) =>
             SpanWrapper(ps, _GetString);
 
+        [SuppressMessage("Style", "IDE1006:Naming rule violation", Justification = "Ported code")]
         Ast.Expression _GetLiteral(FtlParserStream ps)
         {
             var ch = ps.Current;

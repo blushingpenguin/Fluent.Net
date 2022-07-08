@@ -30,15 +30,6 @@ namespace Fluent.Net.Test
             public string Ftl { get; set; }
         }
 
-        static FtlWithDirectives ProcessFtlWithDirectives(string ftl)
-        {
-            return new FtlWithDirectives()
-            {
-                Directives = s_reDirective.Matches(ftl).Select(x => x.Captures[0].Value),
-                Ftl = s_reDirective.Replace(ftl, "")
-            };
-        }
-
         public static BehaviourTestData ParseBehaviourFixture(string ftlPath, string ftl)
         {
             var expected =
@@ -55,19 +46,19 @@ namespace Fluent.Net.Test
 
         static string GetCodeName(string code)
         {
-            switch (code[0])
+            return code[0] switch
             {
-                case 'E':
-                    return $"ERROR {code}";
-                default:
-                    throw new InvalidOperationException($"Unknown Annotation code {code}");
-            }
+                'E' => $"ERROR {code}",
+                _ => throw new InvalidOperationException($"Unknown Annotation code {code}"),
+            };
         }
 
         public static string SerializeAnnotation(Ast.Annotation annotation)
         {
-            var parts = new List<string>();
-            parts.Add(GetCodeName(annotation.Code));
+            var parts = new List<string>
+            {
+                GetCodeName(annotation.Code)
+            };
 
             int start = annotation.Span.Start.Offset,
                 end = annotation.Span.End.Offset;

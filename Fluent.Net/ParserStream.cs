@@ -79,13 +79,13 @@ namespace Fluent.Net
     {
         public const int Eof = -1;
 
-        int _peekIndex = 0;
-        Position _position = Position.Start;
-        List<char> _buf = new List<char>();
-        TextReader _input;
-        bool _inputEnd = false;
-        bool _peekEnd = false;
-        StringBuilder _captureBuf = null;
+        private readonly List<char> _buf = new List<char>();
+        private readonly TextReader _input;
+        private int _peekIndex = 0;
+        private Position _position = Position.Start;
+        private bool _inputEnd = false;
+        private bool _peekEnd = false;
+        private StringBuilder _captureBuf = null;
 
         public ParserStream(TextReader input)
         {
@@ -117,16 +117,6 @@ namespace Fluent.Net
                 return "";
             }
             return _captureBuf.ToString();
-        }
-
-        private int Read()
-        {
-            int ch = _input.Read();
-            if (ch != Eof && _captureBuf != null)
-            {
-                _captureBuf.Append((char)ch);
-            }
-            return ch;
         }
 
         public int Next()

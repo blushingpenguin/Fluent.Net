@@ -1,6 +1,7 @@
 ﻿using Fluent.Net.RuntimeAst;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,8 @@ namespace Fluent.Net
 
     static class BuiltIns
     {
+        [SuppressMessage("Style", "IDE0060:Unused parameter",
+            Justification = "This behaves as an interface via the dynamic cast")]
         public static FluentType Number(IList<object> args, IDictionary<string, object> options)
         {
             // TODO: add to errors?  what we doin here?
@@ -30,6 +33,8 @@ namespace Fluent.Net
             return (FluentNumber)args[0];
         }
 
+        [SuppressMessage("Style", "IDE0060:Unused parameter",
+            Justification = "This behaves as an interface via the dynamic cast")]
         public static FluentType DateTime(IList<object> args, IDictionary<string, object> options)
         {
             if (args.Count != 1)
@@ -196,7 +201,7 @@ namespace Fluent.Net
 
     public class FluentNumber : FluentType
     {
-        double _numberValue;
+        private readonly double _numberValue;
 
         public FluentNumber(string value) :
             base(value)
@@ -274,7 +279,7 @@ namespace Fluent.Net
 
     public class FluentDateTime : FluentType
     {
-        DateTime _dateValue;
+        private readonly DateTime _dateValue;
 
         public FluentDateTime(DateTime value) :
             base(value.ToString("o"))
@@ -372,7 +377,7 @@ namespace Fluent.Net
     /// Message contexts are single-language stores of translations.  They are
     /// responsible for parsing translation resources in the Fluent syntax and can
     /// format translation units (entities) to strings.
-    /// 
+    ///
     /// Always use `MessageContext.format` to retrieve translation units from a
     /// context.Translations can contain references to other entities or variables,
     /// conditional logic in form of select expressions, traits which describe their
@@ -397,38 +402,38 @@ namespace Fluent.Net
 
         /// <summary>
         /// Create an instance of `MessageContext`.
-        /// 
+        ///
         /// The `locales` argument is used to instantiate `Intl` formatters used by
         /// translations.  The `options` object can be used to configure the context.
-        /// 
+        ///
         /// Examples:
-        /// 
+        ///
         ///     const ctx = new MessageContext(locales);
-        /// 
+        ///
         ///     const ctx = new MessageContext(locales, { useIsolating: false });
-        /// 
+        ///
         ///     const ctx = new MessageContext(locales, {
         ///       useIsolating: true,
         ///       functions: {
         ///         NODE_ENV: () => process.env.NODE_ENV
         ///       }
         ///     });
-        /// 
+        ///
         /// Available options:
-        /// 
+        ///
         ///   - `functions` - an object of additional functions available to
         ///                   translations as builtins.
-        /// 
+        ///
         ///   - `useIsolating` - boolean specifying whether to use Unicode isolation
         ///                    marks (FSI, PDI) for bidi interpolations.
-        /// 
+        ///
         ///   - `transform` - a function used to transform string parts of patterns.
         /// </summary>
         /// <param name="locales">Locale or locales of the context</param>
         /// <param name="options">[options]</param>
         ///
         public MessageContext(
-            IEnumerable<string>     locales, 
+            IEnumerable<string>     locales,
             MessageContextOptions   options = null
         )
         {
@@ -456,17 +461,17 @@ namespace Fluent.Net
         ///</summary>
         /// @returns {Iterator}
         ///
-        IEnumerator<KeyValuePair<string, Message>> Messages
-        {
-            get { return _messages.GetEnumerator(); }
-        }
+        // IEnumerator<KeyValuePair<string, Message>> Messages
+        // {
+        //     get { return _messages.GetEnumerator(); }
+        // }
 
         /// <summary>
         /// Check if a message is present in the context.
         ///</summary>
         ///
         /// <param name="id">The identifier of the message to check</param>
-        /// 
+        ///
         /// @returns {bool}
         ///
         public bool HasMessage(string id)
@@ -476,38 +481,37 @@ namespace Fluent.Net
 
         /// <summary>
         /// Return the internal representation of a message.
-        /// 
+        ///
         /// The internal representation should only be used as an argument to
         /// `MessageContext.format`.
         /// </summary>
         /// @param {string} id - The identifier of the message to check.
         /// @returns {Any}
-        /// 
+        ///
         public Message GetMessage(string id)
         {
-            Message message;
-            _messages.TryGetValue(id, out message);
+            _messages.TryGetValue(id, out Message message);
             return message;
         }
 
         /// <summary>
         /// Add a translation resource to the context.
-        /// 
+        ///
         /// The translation resource must use the Fluent syntax.  It will be parsed by
         /// the context and each translation unit (message) will be available in the
         /// context by its identifier.
-        /// 
+        ///
         ///     ctx.addMessages('foo = Foo');
         ///     ctx.getMessage('foo');
-        /// 
+        ///
         ///     // Returns a raw representation of the 'foo' message.
-        /// 
+        ///
         /// Parsed entities should be formatted with the `format` method in case they
         /// contain logic (references, select expressions etc.).
         /// </summary>
         /// @param   {string} source - Text resource with translations.
         /// @returns {Array<Error>}
-        /// 
+        ///
         public IList<ParseException> AddMessages(TextReader source)
         {
             return AddResource(FluentResource.FromReader(source));
@@ -523,16 +527,16 @@ namespace Fluent.Net
 
         /// <summary>
         /// Add a translation resource to the context.
-        /// 
+        ///
         /// The translation resource must be a proper FluentResource
         /// parsed by `MessageContext.parseResource`.
-        /// 
+        ///
         ///     let res = MessageContext.parseResource("foo = Foo");
         ///     ctx.addResource(res);
         ///     ctx.getMessage('foo');
-        /// 
+        ///
         ///     // Returns a raw representation of the 'foo' message.
-        /// 
+        ///
         /// Parsed entities should be formatted with the `format` method in case they
         /// contain logic (references, select expressions etc.).
         /// </summary>
@@ -596,34 +600,34 @@ namespace Fluent.Net
 
         /// <summary>
         /// Format a message to a string or null.
-        /// 
+        ///
         /// Format a raw `message` from the context into a string (or a null if it has
         /// a null value).  `args` will be used to resolve references to variables
         /// passed as arguments to the translation.
-        /// 
+        ///
         /// In case of errors `format` will try to salvage as much of the translation
         /// as possible and will still return a string.  For performance reasons, the
         /// encountered errors are not returned but instead are appended to the
         /// `errors` array passed as the third argument.
-        /// 
+        ///
         ///     const errors = [];
         ///     ctx.addMessages('hello = Hello, { $name }!');
         ///     const hello = ctx.getMessage('hello');
         ///     ctx.format(hello, { name: 'Jane' }, errors);
-        /// 
+        ///
         ///     // Returns 'Hello, Jane!' and `errors` is empty.
-        /// 
+        ///
         ///     ctx.format(hello, undefined, errors);
-        /// 
+        ///
         ///     // Returns 'Hello, name!' and `errors` is now:
-        /// 
+        ///
         ///     [<ReferenceError: Unknown variable: name>]
         /// </summary>
         /// @param   {Object | string}    message
         /// @param   {Object | undefined} args
         /// @param   {Array}              errors
         /// @returns {?string}
-        /// 
+        ///
         public string Format(
             Node message,
             IDictionary<string, object> args = null,

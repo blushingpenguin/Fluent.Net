@@ -71,20 +71,20 @@ namespace Fluent.Net
         const char FSI = '\u2068';
         const char PDI = '\u2069';
 
-        // 
+        //
         // Resolve expression to a Fluent type.
-        // 
+        //
         // JavaScript strings are a special case.  Since they natively have the
         // `toString` method they can be used as if they were a Fluent type without
         // paying the cost of creating a instance of one.
-        // 
+        //
         // @param   {Object} env
         //    Resolver environment object.
         // @param   {Object} expr
         //    An expression object to be resolved into a Fluent type.
         // @returns {FluentType}
         // @private
-        // 
+        //
         static IFluentType ResolveNode(ResolverEnvironment env, Node expr)
         {
             // A fast-path for strings which are the most common case, and for
@@ -190,9 +190,8 @@ namespace Fluent.Net
         static Node MessageReference(ResolverEnvironment env, MessageReference ref_)
         {
             bool isTerm = ref_.Name.StartsWith("-");
-            Message message;
             (isTerm ? env.Context._terms
-                    : env.Context._messages).TryGetValue(ref_.Name, out message);
+                    : env.Context._messages).TryGetValue(ref_.Name, out Message message);
 
             if (message == null)
             {
@@ -287,8 +286,7 @@ namespace Fluent.Net
             if (messageNode.Attributes != null)
             {
                 // Match the specified name against keys of each attribute.
-                Node value;
-                if (messageNode.Attributes.TryGetValue(expr.Name, out value))
+                if (messageNode.Attributes.TryGetValue(expr.Name, out Node value))
                 {
                     return value;
                 }
@@ -362,9 +360,8 @@ namespace Fluent.Net
          */
         static IFluentType VariableReference(ResolverEnvironment env, VariableReference varReference)
         {
-            object arg;
             if (env.Arguments == null ||
-                !env.Arguments.TryGetValue(varReference.Name, out arg))
+                !env.Arguments.TryGetValue(varReference.Name, out object arg))
             {
                 env.Errors?.Add(new ReferenceError($"Unknown variable: ${varReference.Name}"));
                 return new FluentNone(varReference.Name);
@@ -415,8 +412,7 @@ namespace Fluent.Net
         {
             // Some functions are built-in.  Others may be provided by the runtime via
             // the `MessageContext` constructor.
-            ExternalFunction fn;
-            if (!env.Context.Functions.TryGetValue(expr.Function, out fn) &&
+            if (!env.Context.Functions.TryGetValue(expr.Function, out ExternalFunction fn) &&
                 !BuiltInFunctions.TryGetValue(expr.Function, out fn))
             {
                 env.Errors?.Add(new ReferenceError(

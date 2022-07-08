@@ -38,25 +38,23 @@ namespace Fluent.Net.Test
         [Test, TestCaseSource("ReadStructureFixtures")]
         public void StructureTest(StructureTestData testData)
         {
-            using (var sr = new StringReader(testData.Ftl))
-            {
-                var resource = new RuntimeParser().GetResource(sr);
+            using var sr = new StringReader(testData.Ftl);
+            var resource = new RuntimeParser().GetResource(sr);
 
-                var entryJson = RuntimeAstToJson.ToJson(resource.Entries);
-                bool resultsEqual = JToken.DeepEquals(entryJson, testData.Expected);
-                if (!resultsEqual)
-                {
-                    Console.WriteLine("parsed =");
-                    Console.WriteLine(entryJson);
-                    Console.WriteLine("expected =");
-                    Console.WriteLine(testData.Expected);
-                    var jdp = new JsonDiffPatch();
-                    var diff = jdp.Diff(entryJson, testData.Expected);
-                    Console.WriteLine("diff =");
-                    Console.WriteLine(diff);
-                }
-                resultsEqual.Should().BeTrue();
+            var entryJson = RuntimeAstToJson.ToJson(resource.Entries);
+            bool resultsEqual = JToken.DeepEquals(entryJson, testData.Expected);
+            if (!resultsEqual)
+            {
+                Console.WriteLine("parsed =");
+                Console.WriteLine(entryJson);
+                Console.WriteLine("expected =");
+                Console.WriteLine(testData.Expected);
+                var jdp = new JsonDiffPatch();
+                var diff = jdp.Diff(entryJson, testData.Expected);
+                Console.WriteLine("diff =");
+                Console.WriteLine(diff);
             }
+            resultsEqual.Should().BeTrue();
         }
 
         public static StructureTestData ReadBehaviourFixture(string jsonPath, string json)
@@ -73,60 +71,58 @@ namespace Fluent.Net.Test
         [Test, TestCaseSource("ReadBehaviourFixtures")]
         public void BehaviourTest(StructureTestData testData)
         {
-            using (var sr = new StringReader(testData.Ftl))
+            using var sr = new StringReader(testData.Ftl);
+            var resource = new RuntimeParser().GetResource(sr);
+            var entryJson = RuntimeAstToJson.ToJson(resource.Entries);
+            entryJson.Should().BeOfType<JObject>();
+            var entries = (JObject)entryJson;
+
+            // For some reason, this does a really shallow test -- just checks
+            // keys in the objects rather than the contents.  Probably better
+            // to just replace the expected outputs with the whole serialized
+            // json.
+            foreach (var expectedKeyValue in testData.Expected)
             {
-                var resource = new RuntimeParser().GetResource(sr);
-                var entryJson = RuntimeAstToJson.ToJson(resource.Entries);
-                entryJson.Should().BeOfType<JObject>();
-                var entries = (JObject)entryJson;
+                entries.Should().ContainKey(expectedKeyValue.Key);
+                var entry = entries[expectedKeyValue.Key];
 
-                // For some reason, this does a really shallow test -- just checks
-                // keys in the objects rather than the contents.  Probably better
-                // to just replace the expected outputs with the whole serialized
-                // json.
-                foreach (var expectedKeyValue in testData.Expected)
+                expectedKeyValue.Value.Should().NotBeNull();
+                expectedKeyValue.Value.Should().BeOfType<JObject>();
+                var expected = (JObject)expectedKeyValue.Value;
+
+                if (expected["value"].Type == JTokenType.Boolean &&
+                    (bool)((JValue)expected["value"]).Value)
                 {
-                    entries.Should().ContainKey(expectedKeyValue.Key);
-                    var entry = entries[expectedKeyValue.Key];
+                    entry.Should().Match<JToken>(
+                        x => x.Type == JTokenType.String ||
+                        x.Type == JTokenType.Object && ((JObject)x).ContainsKey("val"));
+                }
+                else
+                {
+                    entry.Should().Match<JToken>(
+                        x => x.Type != JTokenType.String &&
+                        !(x.Type == JTokenType.Object && ((JObject)x).ContainsKey("val")));
+                }
 
-                    expectedKeyValue.Value.Should().NotBeNull();
-                    expectedKeyValue.Value.Should().BeOfType<JObject>();
-                    var expected = (JObject)expectedKeyValue.Value;
+                if (expected.ContainsKey("attributes"))
+                {
+                    entry.Type.Should().Be(JTokenType.Object);
+                    var entryObj = (JObject)entry;
+                    entryObj.Should().ContainKey("attrs");
 
-                    if (expected["value"].Type == JTokenType.Boolean &&
-                        (bool)((JValue)expected["value"]).Value)
-                    {
-                        entry.Should().Match<JToken>(
-                            x => x.Type == JTokenType.String ||
-                            x.Type == JTokenType.Object && ((JObject)x).ContainsKey("val"));
-                    }
-                    else
-                    {
-                        entry.Should().Match<JToken>(
-                            x => x.Type != JTokenType.String &&
-                            !(x.Type == JTokenType.Object && ((JObject)x).ContainsKey("val")));
-                    }
+                    var expectedKeys = ((JObject)expected["attributes"])
+                        .Properties().Select(x => x.Name);
+                    var entryKeys = ((JObject)entryObj["attrs"])
+                        .Properties().Select(x => x.Name);
 
-                    if (expected.ContainsKey("attributes"))
-                    {
-                        entry.Type.Should().Be(JTokenType.Object);
-                        var entryObj = (JObject)entry;
-                        entryObj.Should().ContainKey("attrs");
-
-                        var expectedKeys = ((JObject)expected["attributes"])
-                            .Properties().Select(x => x.Name);
-                        var entryKeys = ((JObject)entryObj["attrs"])
-                            .Properties().Select(x => x.Name);
-
-                        expectedKeys.Should().BeEquivalentTo(entryKeys);
-                    }
-                    else
-                    {
-                        entry.Should().Match<JToken>(
-                            x => x.Type == JTokenType.String ||
-                                 (x.Type == JTokenType.Object &&
-                                    !((JObject)x).ContainsKey("attrs")));
-                    }
+                    expectedKeys.Should().BeEquivalentTo(entryKeys);
+                }
+                else
+                {
+                    entry.Should().Match<JToken>(
+                        x => x.Type == JTokenType.String ||
+                             (x.Type == JTokenType.Object &&
+                                !((JObject)x).ContainsKey("attrs")));
                 }
             }
         }
