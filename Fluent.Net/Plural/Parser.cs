@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace Fluent.Net.Plural
@@ -324,7 +325,7 @@ namespace Fluent.Net.Plural
                 seenDot = seenDot || Current == '.';
             }
             var valString = buf.ToString();
-            if (!Decimal.TryParse(valString.ToString(), out decimal val))
+            if (!Decimal.TryParse(valString.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal val))
             {
                 Error($"Invalid decimal value {valString}");
             }
