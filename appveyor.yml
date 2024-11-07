@@ -19,12 +19,12 @@ test_script:
   - ps: |
       dotnet test --configuration Release --filter=TestCategory!=ApiTests /p:CollectCoverage=true /p:Exclude='\"[*TestAdapter*]*,[*]*.Startup*,[*]*.Program,[*.Test*]*,[nunit*]*\"' /p:ExcludeByAttribute='\"Obsolete,GeneratedCode,CompilerGeneratedAttribute\"'  /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../coverage/Fluent.Net.coverage.cobertura.xml /p:Threshold=80 /p:ThresholdType=branch Fluent.Net.Test/Fluent.Net.Test.csproj
       dotnet test --configuration Release --filter=TestCategory!=ApiTests /p:CollectCoverage=true /p:Exclude='\"[*TestAdapter*]*,[*]*.Startup*,[*]*.Program,[*.Test*]*,[nunit*]*,[Fluent.Net]*\"' /p:ExcludeByAttribute='\"Obsolete,GeneratedCode,CompilerGeneratedAttribute\"'  /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../coverage/Fluent.Net.SyntaxTest.coverage.cobertura.xml /p:Threshold=80 /p:ThresholdType=branch Fluent.Net.SyntaxTest.Test/Fluent.Net.SyntaxTest.Test.csproj
-after_test:
-- ps: |
-    $env:PATH = 'C:\Program Files\git\usr\bin;' + $env:PATH
-    Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
-    bash codecov.sh -f '"coverage/*.xml"' -t $env:CODECOV_REPO_TOKEN
-    echo ("for some reason printing the last exit code makes appveyor think this step succeeded " + $lastExitCode)
+# after_test:
+# - ps: |
+#     $env:PATH = 'C:\Program Files\git\usr\bin;' + $env:PATH
+#     Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
+#     bash codecov.sh -f '"coverage/*.xml"' -t $env:CODECOV_REPO_TOKEN
+#     echo ("for some reason printing the last exit code makes appveyor think this step succeeded " + $lastExitCode)
 for:
 -
   branches:
@@ -37,7 +37,7 @@ for:
   deploy:
     provider: NuGet
     api_key:
-      secure: F9RK0BX37n+nvYMX5hw8wcu9mYkKPuA87YaNWobY8+lnWH5hbor62eeozVE/1Qhu
+      secure: KqKTxwdbcvlB9Hp5+5rdk6nANSM4IAd+NKA+Ojik7d6eLk0/JGblNJlnUNXARmd5
     skip_symbols: false
 
 # on_finish:
